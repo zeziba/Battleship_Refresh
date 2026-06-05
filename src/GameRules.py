@@ -57,24 +57,6 @@ FLEET = {
     "DESTROYER": 3,
 }
 
-# OUTPUTS = (
-#     "Please enter in your coords: x y\n\t",
-#     "Please enter in your directionality: h -> horizontal or v -> vertical\n\t",
-#     f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t",
-#     f"Placing {Colors.GREEN}{{}}{Colors.END}",
-#     f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location.",
-#     "Failed to place {} as input was mangled",
-#     f"Input must be in the form of {Colors.CYAN}<int> <int>{Colors.END} {{}}",
-#     "\nExample:\n1 3",
-#     "\nExample:\n<h|v>",
-#     f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}",
-#     f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} {{}}",
-#     "Coordinates are not valid, attempt again",
-#     f"Current turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted",
-#     f"{Colors.GREEN}{{}}{Colors.END} has won the game!",
-#     f"Location has {Colors.RED}already been struck once{Colors.END} before try again.",
-# )
-
 class Output(StrEnum):
     COORD_ENTER = "Please enter in your coords: x y\n\t"
     DIR_ENTER = "Please enter in your directionality: h -> horizontal or v -> vertical\n\t"
