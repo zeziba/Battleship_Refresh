@@ -166,7 +166,8 @@ class Game:
 
     def output_player(self, player: Player.Player, hidden: bool = True):
         logger.info(f"Is {'' if hidden else 'not'} outputing to screen")
-        self.UI.output(player.board.output_readable(hidden=hidden))
+        # self.UI.output(player.board.output_readable(hidden=hidden))
+        self.UI.print_board(player.board, hidden)
 
     @property
     def _get_turn(self):

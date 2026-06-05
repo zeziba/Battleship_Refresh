@@ -32,7 +32,7 @@ class Tile:
         self._contains = value
 
     @property
-    def has(self) -> object:
+    def has(self) -> Ship | None:
         return self._contains
 
     @property
