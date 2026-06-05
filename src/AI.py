@@ -3,10 +3,12 @@ import GameRules
 
 
 class HuntAndTargetAI:
+    shots_taken = set()
+    targets = []
+    board_size = GameRules.SIZE
+
     def __int__(self):
-        self.board_size = GameRules.SIZE
-        self.shots_taken = set()
-        self.targets = []
+        pass
 
     def get_shot(self) -> tuple[int, int]:
         while self.targets:
