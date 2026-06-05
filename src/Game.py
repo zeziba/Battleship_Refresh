@@ -97,7 +97,8 @@ class Game:
                     logger.info(f"Player is {p.state} - starting fleet generation")
                     import random
 
-                    p._ai_brain = AI.HuntAndTargetAI()
+                    # p._ai_brain = AI.HuntAndTargetAI()
+                    p._ai_brain = AI.HuntAndTargetAIAdv()
                     for ship in p.get_ships:
                         logger.debug(f"\tAttemtpting to place {ship.name}")
                         while True:
@@ -115,23 +116,33 @@ class Game:
                                     else Ship.Direction.VERTICAL
                                 )
                                 ship.place_ship(x, y, p.board)
-                                logger.debug(f"\tSucceeded to place {ship.name} at ({x}, {y}, {h_v})")
+                                logger.debug(
+                                    f"\tSucceeded to place {ship.name} at ({x}, {y}, {h_v})"
+                                )
                                 break
-                            logger.debug(f"\tFailed to place {ship.name} at ({x}, {y}, {h_v})")
+                            logger.debug(
+                                f"\tFailed to place {ship.name} at ({x}, {y}, {h_v})"
+                            )
                 else:
                     logger.info(f"Player is {p.state} - starting fleet generation")
                     ships = [ship for ship in p.get_ships]
                     while ships:
-                        logger.debug(f"\tStarting ship placement - ships left {len(ships)}")
+                        logger.debug(
+                            f"\tStarting ship placement - ships left {len(ships)}"
+                        )
                         ship = ships.pop()
                         logger.debug(f"\tShip: {ship.name}")
                         self.UI.output(GameRules.Output.PLACE.format(ship.name))
                         try:
                             x, y = self.UI.get_coords(GameRules.Output.COORD_ENTER)
                         except ValueError as error:
-                            self.UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
                             self.UI.output(
-                                GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1)
+                                GameRules.Output.MANGLED_PLACE.format(ship.name)
+                            )
+                            self.UI.output(
+                                GameRules.Output.WRONG_INPUT.format(
+                                    GameRules.Output.EXAMPLE_1
+                                )
                             )
                             ships.append(ship)
                             continue
@@ -141,7 +152,9 @@ class Game:
                         if not self._check(x, y, h_v, p):
                             logger.debug("Passed check, failed placing")
                             self.UI.output(
-                                GameRules.Output.FAILED_PLACE.format(ship.name, x, y, h_v)
+                                GameRules.Output.FAILED_PLACE.format(
+                                    ship.name, x, y, h_v
+                                )
                             )
                             ships.append(ship)
                             continue
@@ -205,7 +218,7 @@ class Game:
         while True:
             self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
 
-            if attacker.state is Player.State.AI:
+            if attacker._ai_brain and attacker.state is Player.State.AI:
                 x, y = attacker._ai_brain.get_shot()
                 self.UI.output(GameRules.Output.AI_SHOT_TAKEN.format(x, y))
             else:
@@ -223,8 +236,10 @@ class Game:
                 self.UI.output(GameRules.Output.SHOT_AT.format(x, y, name))
             self.output_player(defender)
 
-            if attacker.state is Player.State.AI and tile.has:
-                attacker._ai_brain.register_hit(x, y)
+            if attacker._ai_brain and attacker.state is Player.State.AI and tile.has:
+                if tile.has.is_sunk:
+                    attacker._ai_brain.ships_left.pop(tile.has.name)
+                attacker._ai_brain.register_hit(x, y, tile.has.is_sunk)
             break
 
     def take_turns(self):

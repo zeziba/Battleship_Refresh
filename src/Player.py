@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Generator
-from AI import HuntAndTargetAI
+from AI import BattleShipAI
 
 if TYPE_CHECKING:
     import Board
@@ -22,7 +22,7 @@ class Player:
     _state: State
     _board: Board.Board
     _fleet: Fleet.GeneralFleet
-    _ai_brain: 'HuntAndTargetAI' = field(default_factory=HuntAndTargetAI)
+    _ai_brain: BattleShipAI | None = None
 
     @property
     def name(self):

@@ -1,50 +1,25 @@
 import random
 import GameRules
+from abc import ABC, abstractmethod
 
 
-class HuntAndTargetAI:
+class BattleShipAI(ABC):
+    shots_taken: set
+    potential_shots: list
+    targets: list
+    board_size: int
+    ships_left: dict[str, int]
 
-    def __init__(self):
-        self.shots_taken = set()
-        self.potential_shots = []
-        self.targets = []
-        self.board_size = GameRules.SIZE
-
-        for x in range(GameRules.SIZE):
-            for y in range(GameRules.SIZE):
-                if (x + y) % 2 == 0:
-                    self.potential_shots.append((x, y))
-
+    @abstractmethod
     def get_shot(self) -> tuple[int, int]:
-        while self.targets:
-            x, y = self.targets.pop()
-            if (x, y) in self.potential_shots:
-                self.potential_shots.remove((x, y))
-            self.shots_taken.add((x, y))
-            return x, y
-        
-        if self.potential_shots:
-            x, y = random.choice(self.potential_shots)
-            self.potential_shots.remove((x, y))
-            self.shots_taken.add((x, y))
-            return x, y
+        pass
 
-        while True:
-            x = random.randint(0, self.board_size - 1)
-            y = random.randint(0, self.board_size - 1)
-            if (x, y) not in self.shots_taken:
-                self.shots_taken.add((x, y))
-                return (x, y)
-    
-    def register_hit(self, x: int, y: int):
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            nx, ny = x +dx, y + dy
-            if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
-                if (nx, ny) not in self.shots_taken:
-                    self.targets.append((nx, ny))
+    @abstractmethod
+    def register_hit(self, x: int, y: int, has_sunk: bool = False) -> None:
+        pass
 
 
-class HuntAndTargetAIAdv:
+class HuntAndTargetAI(BattleShipAI):
 
     def __init__(self):
         self.shots_taken = set()
@@ -79,9 +54,70 @@ class HuntAndTargetAIAdv:
                 self.shots_taken.add((x, y))
                 return (x, y)
     
-    def register_hit(self, x: int, y: int):
+    def register_hit(self, x: int, y: int, has_sunk: bool = False):
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             nx, ny = x +dx, y + dy
             if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
                 if (nx, ny) not in self.shots_taken:
                     self.targets.append((nx, ny))
+
+
+class HuntAndTargetAIAdv(BattleShipAI):
+
+    def __init__(self):
+        self.shots_taken = set()
+        self.potential_shots = []
+        self.targets = []
+        self.board_size = GameRules.SIZE
+        self.ships_left = GameRules.FLEET.copy()
+
+        for x in range(GameRules.SIZE):
+            for y in range(GameRules.SIZE):
+                if (x + y) % 2 == 0:
+                    self.potential_shots.append((x, y))
+
+    @property
+    def smallest_ship_left(self):
+        if self.ships_left:
+            return min(self.ships_left.values())
+        return 2
+    
+    def rebuild_potential_shots(self):
+        smallest = self.smallest_ship_left
+        for x in range(GameRules.SIZE):
+            for y in range(GameRules.SIZE):
+                if (x + y) % smallest != 0:
+                    continue
+                if (x, y) in self.shots_taken:
+                    continue
+                self.potential_shots.append((x, y))
+
+    def get_shot(self) -> tuple[int, int]:
+        while self.targets:
+            x, y = self.targets.pop()
+            if (x, y) in self.potential_shots:
+                self.potential_shots.remove((x, y))
+            self.shots_taken.add((x, y))
+            return x, y
+        
+        if self.potential_shots:
+            x, y = random.choice(self.potential_shots)
+            self.potential_shots.remove((x, y))
+            self.shots_taken.add((x, y))
+            return x, y
+
+        while True:
+            x = random.randint(0, self.board_size - 1)
+            y = random.randint(0, self.board_size - 1)
+            if (x, y) not in self.shots_taken:
+                self.shots_taken.add((x, y))
+                return (x, y)
+    
+    def register_hit(self, x: int, y: int, has_sunk: bool = False):
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nx, ny = x +dx, y + dy
+            if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
+                if (nx, ny) not in self.shots_taken:
+                    self.targets.append((nx, ny))
+        if has_sunk:
+            self.rebuild_potential_shots()
