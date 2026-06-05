@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Generator
-from AI import BattleShipAI
 
 if TYPE_CHECKING:
     import Board
     import Fleet
     import Ship
+    from AI import BattleShipAI
 
 
 class State(Enum):
