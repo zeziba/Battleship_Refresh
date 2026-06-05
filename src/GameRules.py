@@ -1,14 +1,25 @@
-from enum import Enum, auto
+from enum import Enum, auto, StrEnum
 
 from Logger import get_logger
 logger = get_logger(__name__)
 
 SIZE = 10
 
-EmptyTile = ". "
-HitTile = "X "
-UnknownTile = "U "
-FillTile = "{} "
+class Colors(StrEnum):
+    RESET = "\033[0m"
+    RED = "\033[91m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    CYAN = "\033[96m"
+    WHITE = "\033[7m"
+    BRIGHT_RED = "\033[196m"
+
+EmptyTile = f"{Colors.BLUE}. {Colors.RESET}"
+HitTile = f"{Colors.RED}X {Colors.RESET}"
+UnknownTile = f"{Colors.WHITE}U {Colors.RESET}"
+FillTile = f"{Colors.YELLOW}0 {Colors.RESET}"
+SunkShip = f"{Colors.BRIGHT_RED}* {Colors.RESET}"
 
 
 def check_xy(x: int, y: int) -> bool:
@@ -28,19 +39,19 @@ FLEET = {
 OUTPUTS = (
     "Please enter in your coords: x y\n\t",
     "Please enter in your directionality: h -> horizontal or v -> vertical\n\t",
-    "Please enter in the starting location of the {}: x y\n\t",
-    "Placing {}",
-    "Failed to place {} at ({}, {}) with directionality {} as not a valid location.",
+    f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.RESET}: x y\n\t",
+    f"Placing {Colors.GREEN}{{}}{Colors.RESET}",
+    f"{Colors.RED}Failed{Colors.RESET} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location.",
     "Failed to place {} as input was mangled",
-    "Input must be in the form of <int> <int> {}",
+    f"Input must be in the form of {Colors.CYAN}<int> <int>{Colors.RESET} {{}}",
     "\nExample:\n1 3",
     "\nExample:\n<h|v>",
-    "Preparing to take a shot at {}",
-    "Shot at ({},{}) {}",
+    f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.RESET}",
+    f"Shot at {Colors.GREEN}({{}},{{}}){Colors.RESET} {{}}",
     "Coordinates are not valid, attempt again",
-    "Currently turn: {} with player {} being targeted",
-    "{} has won the game!",
-    "Location has already been struck once before try again.",
+    f"Currently turn: {Colors.YELLOW}{{}}{Colors.RESET} with player {Colors.GREEN}{{}}{Colors.RESET} being targeted",
+    f"{Colors.GREEN}{{}}{Colors.RESET} has won the game!",  
+    f"Location has {Colors.RED}already been struck once{Colors.RESET} before try again.",
 )
 
 
