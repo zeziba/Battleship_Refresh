@@ -1,5 +1,8 @@
 from enum import Enum, auto
 
+from Logger import get_logger
+logger = get_logger(__name__)
+
 SIZE = 10
 
 EmptyTile = ". "
@@ -10,8 +13,8 @@ FillTile = "{} "
 
 def check_xy(x: int, y: int) -> bool:
     """Checks if the x, y coords fall within the board"""
-    size = SIZE - 1
-    return (size >= x >= 0) and (size >= y >= 0)
+    logger.info(f"Checking ({x}, {y})")
+    return (0 <= x < SIZE) and (0 <= y < SIZE)
 
 
 FLEET = {
