@@ -174,7 +174,7 @@ class Game:
         logger.info("Init turn generator")
         players: list[str] = list(self.players_dict.keys())
         turn = 0
-        max_turns = GameRules.SIZE**2
+        max_turns = len(self.players) * GameRules.SIZE**2
         while turn < max_turns and not self.any_won:
             attacker = self.players_dict[players[turn % 2]]
             defender = self.players_dict[players[(turn + 1) % 2]]
@@ -208,7 +208,6 @@ class Game:
             if attacker.state is Player.State.AI:
                 x, y = attacker._ai_brain.get_shot()
                 self.UI.output(GameRules.Output.AI_SHOT_TAKEN.format(x, y))
-                self.UI.pause(self.UI.delay)
             else:
                 x, y = self._take_shot()
 
@@ -226,14 +225,21 @@ class Game:
             break
 
     def take_turns(self):
-        # TODO: Might still be goofy
         logger.info("Taking a turn")
-        UI.UI.clear_screen()
+        self.UI.clear_screen()
+        current: Player.Player | None = None
 
         for turn, attacker, defender in self._get_turn:
+            if turn % 3 == 0:
+                self.UI.clear_screen()
             logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
             self.UI.output(GameRules.Output.CURRENT_TURN.format(turn, defender.name))
             self._take_turn(attacker, defender)
+            current = attacker
+            # self.UI.pause(self.UI.delay)
+
+        if current:
+            self.UI.output(GameRules.Output.WON_GAME.format(current.name))
 
 
 if __name__ == "__main__":

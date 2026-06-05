@@ -3,23 +3,36 @@ import GameRules
 
 
 class HuntAndTargetAI:
-    shots_taken = set()
-    targets = []
-    board_size = GameRules.SIZE
 
-    def __int__(self):
-        pass
+    def __init__(self):
+        self.shots_taken = set()
+        self.potential_shots = []
+        self.targets = []
+        self.board_size = GameRules.SIZE
+        
+        for x in range(GameRules.SIZE):
+            for y in range(GameRules.SIZE):
+                if (x + y) % 2 == 0:
+                    self.potential_shots.append((x, y))
 
     def get_shot(self) -> tuple[int, int]:
         while self.targets:
             x, y = self.targets.pop()
-            if (x, y) not in self.shots_taken:
-                return x, y
+            if (x, y) in self.potential_shots:
+                self.potential_shots.remove((x, y))
+            self.shots_taken.add((x, y))
+            return x, y
+        
+        if self.potential_shots:
+            x, y = random.choice(self.potential_shots)
+            self.potential_shots.remove((x, y))
+            self.shots_taken.add((x, y))
+            return x, y
 
         while True:
             x = random.randint(0, self.board_size - 1)
             y = random.randint(0, self.board_size - 1)
-            if (x + y) % 2 == 0 and (x, y) not in self.shots_taken:
+            if (x, y) not in self.shots_taken:
                 self.shots_taken.add((x, y))
                 return (x, y)
     
