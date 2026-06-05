@@ -1,8 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import Any, Generator
 
 import Board
 import Fleet
+import Ship
+from AI import HuntAndTargetAI
 
 
 class State(Enum):
@@ -16,6 +19,7 @@ class Player:
     _state: State
     _board: Board.Board
     _fleet: Fleet.GeneralFleet
+    _ai_brain: 'HuntAndTargetAI' = field(default_factory=HuntAndTargetAI)
 
     @property
     def name(self):
@@ -40,7 +44,7 @@ class Player:
             self.fleet.generate()
 
     @property
-    def get_ships(self):
+    def get_ships(self) -> Generator[Ship.Ship, Any, None]:
         for ship in self.fleet.fleet:
             yield self.fleet.fleet[ship]
 

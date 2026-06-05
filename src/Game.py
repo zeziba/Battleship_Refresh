@@ -6,6 +6,7 @@ import GameRules
 import Player
 import Ship
 import UI
+import AI
 
 TESTING = False
 
@@ -24,7 +25,7 @@ class Game:
     """
 
     players: tuple[bool, bool]
-    players_dict: dict = field(default_factory=dict)
+    players_dict: dict[str, Player.Player] = field(default_factory=dict)
     state: GameRules.State = field(default=GameRules.State.STOPPED)
 
     def __post_init__(self):
@@ -75,8 +76,22 @@ class Game:
                     ship.place_ship(i := i + 1, 0, p.board)
             else:
                 if p.state is Player.State.AI:
+                    import random
+
+                    p._ai_brain = AI.HuntAndTargetAI()
                     for ship in p.get_ships:
-                        ship.place_ship(i := i + 1, 0, p.board)
+                        while True:
+                            x = random.randint(0, GameRules.SIZE - 1)
+                            y = random.randint(0, GameRules.SIZE - 1)
+                            h_v = random.choice(["h", "v"])
+                            if self.__check(x, y, h_v, p):
+                                ship.directionality = (
+                                    Ship.Direction.HORIZONTAL
+                                    if h_v == "h"
+                                    else Ship.Direction.VERTICAL
+                                )
+                                ship.place_ship(x, y, p.board)
+                                break
                 else:
                     ships = [ship for ship in p.get_ships]
                     while ships:
@@ -120,15 +135,15 @@ class Game:
         self.UI.output(player.board.output_readable(hidden=hidden))
 
     @property
-    def __get_turn(self):
+    def _get_turn(self):
         turn = 0
-        max_turns = GameRules.SIZE ** 2
+        max_turns = GameRules.SIZE**2
         while turn < max_turns and not self.any_won:
             for player in self.player:
                 yield turn, player
             turn += 1
 
-    def __take_shot(self):
+    def _take_shot(self):
         while True:
             try:
                 x, y = self.UI.get_coords(GameRules.OUTPUTS[0])
@@ -141,28 +156,44 @@ class Game:
                     self.UI.output(GameRules.OUTPUTS[11])
         return x, y
 
-    def __take_turn(self, _player: Player.Player) -> None:
+    def _take_turn(self, attacker: Player.Player, defender: Player.Player) -> None:
         """
         Take a turn, the presumption is that the given player is the player being worked on.
         Meaning its the other players turn other than the given player.
         """
         while True:
-            self.UI.output(GameRules.OUTPUTS[9].format(_player.name))
-            x, y = self.__take_shot()
-            if _player.board.get(x, y).hit:
+            self.UI.output(GameRules.OUTPUTS[9].format(defender.name))
+
+            if attacker.state is Player.State.AI:
+                x, y = attacker._ai_brain.get_shot()
+            else:
+                x, y = self._take_shot()
+
+            if defender.board.get(x, y).hit:
                 self.UI.output(GameRules.OUTPUTS[14])
                 continue
-            tile_state = _player.take_at_self_shot(x, y)
-            name = tile_state[1].has.name if tile_state[1].has is Ship.Ship else "nothing"
+            fleet, tile = defender.take_at_self_shot(x, y)
+            name = tile.has.name if tile.has is Ship.Ship else "nothing"
             self.UI.output(GameRules.OUTPUTS[10].format(x, y, name))
-            self.output_player(_player)
+            self.output_player(defender)
+
+            if attacker.state is Player.State.AI and tile.has:
+                attacker._ai_brain.register_hit(x, y)
             break
 
     def take_turns(self):
-        for turn, player in self.__get_turn:
-            self.UI.output(GameRules.OUTPUTS[12].format(turn, player.name))
-            self.__take_turn(player)
-        self.UI.output(GameRules.OUTPUTS[13].format(next(self.player)))
+        # TODO: Might still be goofy
+        players: list[str] = list(self.players_dict.keys())
+        turn = 0
+        max_turns = GameRules.SIZE**2
+
+        while turn < max_turns and self.any_won:
+            attacker: Player.Player = self.players_dict[players[turn % 2]]
+            defender: Player.Player = self.players_dict[players[(turn + 1) % 2]]
+
+            self.UI.output(GameRules.OUTPUTS[12].format(turn, defender.name))
+            self._take_turn(attacker, defender)
+            turn += 1
 
 
 if __name__ == "__main__":
