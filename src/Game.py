@@ -216,8 +216,11 @@ class Game:
                 logger.debug("\tLocation already selected")
                 continue
             fleet, tile = defender.take_at_self_shot(x, y)
-            name = tile.has.name if tile.has is Ship.Ship else "nothing"
-            self.UI.output(GameRules.Output.SHOT_AT.format(x, y, name))
+            if tile.has and tile.has.is_sunk:
+                self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
+            else:
+                name = tile.has.name if tile.has is Ship.Ship else "nothing"
+                self.UI.output(GameRules.Output.SHOT_AT.format(x, y, name))
             self.output_player(defender)
 
             if attacker.state is Player.State.AI and tile.has:

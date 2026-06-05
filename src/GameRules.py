@@ -74,6 +74,7 @@ class Output(StrEnum):
     WON_GAME = f"{Colors.GREEN}{{}}{Colors.END} has won the game!"
     STRUCK_AGAIN = f"Location has {Colors.RED}already been struck once{Colors.END} before try again."
     AI_SHOT_TAKEN = f"{Colors.GREEN}AI{Colors.END} fired at {Colors.LIGHT_WHITE}({{}}, {{}}){Colors.END}"
+    SUNK_SHIP = f"{Colors.LIGHT_PURPLE}{{}}{Colors.END} has been sunk!"
 
 
 class State(Enum):
