@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from Logger import get_logger, reset_log_file
+from Logger import get_logger
 
 import Board
 import Fleet
@@ -207,6 +207,8 @@ class Game:
 
             if attacker.state is Player.State.AI:
                 x, y = attacker._ai_brain.get_shot()
+                self.UI.output(GameRules.Output.AI_SHOT_TAKEN.format(x, y))
+                self.UI.pause(self.UI.delay)
             else:
                 x, y = self._take_shot()
 

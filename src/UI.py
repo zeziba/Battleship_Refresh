@@ -14,6 +14,8 @@ from GameRules import Colors, SIZE, HitTile, MissTile, EmptyTile
 
 @dataclass()
 class UI:
+    delay = 0.5 
+    
     def get_coords(self, output: str) -> tuple[int, int]:
         x, y = input(f"{output}").split(" ")
         return int(x), int(y)
