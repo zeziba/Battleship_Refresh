@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from Logger import get_logger, reset_log_file
 
 import Board
 import Fleet
@@ -9,6 +10,7 @@ import UI
 import AI
 
 TESTING = False
+logger = get_logger(__name__)
 
 
 @dataclass()
@@ -29,33 +31,46 @@ class Game:
     state: GameRules.State = field(default=GameRules.State.STOPPED)
 
     def __post_init__(self):
-        self.__set_up()
+        logger.debug("Post-init")
+        self._set_up()
         self.UI = UI.UI()
 
     @property
     def player(self):
         for _p in self.players_dict:
+            logger.info(f"yielding {_p}")
             yield self.players_dict[_p]
 
     def stop(self) -> None:
         self.state = GameRules.State.STOPPED
+        logger.info(f"Game set to {self.state}")
 
     def start(self) -> None:
         self.state = GameRules.State.RUNNING
+        logger.info(f"Game set to {self.state}")
 
     @property
     def stopped(self) -> bool:
+        logger.info("Checking if game has stopped")
         return self.state == GameRules.State.STOPPED
 
-    def __set_up(self) -> None:
+    def _set_up(self) -> None:
+        logger.info("Setting up game board")
         for index, i in enumerate(self.players):
+            logger.debug(f"Attempting to init - {index}\t{i}")
             state = Player.State.AI if i is False else Player.State.PERSON
             name = f"p{index}"
             self.players_dict[name] = Player.Player(
                 name, state, Board.Board(), Fleet.GeneralFleet()
             )
+            logger.debug(f"Finished init of {name} as {state}")
 
-    def __check(self, x: int, y: int, h_v: str, p: Player.Player):
+    def _check(self, x: int, y: int, h_v: str, p: Player.Player) -> bool:
+        """
+        Checks if the given (x, y, h_v, p) are able to place at the given
+        location and directionality
+        """
+        logger.info(f"Checking {p.name} at ({x}, {y}) with {h_v}")
         good_coords = not GameRules.check_xy(x, y)
         good_h_v = (h_v not in "hv") and (len(h_v) == 1)
         good_place = any(
@@ -63,39 +78,53 @@ class Game:
             for s in p.get_ships
             for px, py in Ship.Ship.possible_places(x, y, s.length, s.directionality)
         )
-        return good_coords or good_h_v or good_place
+        return not (good_coords or good_h_v or good_place)
 
     def set_up(self) -> None:
-        self.__set_up()
+        logger.info("Starting set-up")
+        self._set_up()
         for p in self.player:
+            logger.info(f"\tPlayer {p}")
             i = 0
             p.board.generate_board()
             p.fleet.generate()
             if TESTING:
+                logger.info("\tTesting enabled - generic ship placement")
                 for ship in p.get_ships:
                     ship.place_ship(i := i + 1, 0, p.board)
             else:
                 if p.state is Player.State.AI:
+                    logger.info(f"Player is {p.state} - starting fleet generation")
                     import random
 
                     p._ai_brain = AI.HuntAndTargetAI()
                     for ship in p.get_ships:
+                        logger.debug(f"\tAttemtpting to place {ship.name}")
                         while True:
-                            x = random.randint(0, GameRules.SIZE - 1)
-                            y = random.randint(0, GameRules.SIZE - 1)
                             h_v = random.choice(["h", "v"])
-                            if self.__check(x, y, h_v, p):
+                            if "h" == h_v:
+                                x = random.randint(0, GameRules.SIZE - 1 - ship.length)
+                                y = random.randint(0, GameRules.SIZE - 1)
+                            else:
+                                x = random.randint(0, GameRules.SIZE - 1)
+                                y = random.randint(0, GameRules.SIZE - 1 - ship.length)
+                            if self._check(x, y, h_v, p):
                                 ship.directionality = (
                                     Ship.Direction.HORIZONTAL
                                     if h_v == "h"
                                     else Ship.Direction.VERTICAL
                                 )
                                 ship.place_ship(x, y, p.board)
+                                logger.debug(f"\tSucceeded to place {ship.name} at ({x}, {y}, {h_v})")
                                 break
+                            logger.debug(f"\tFailed to place {ship.name} at ({x}, {y}, {h_v})")
                 else:
+                    logger.info(f"Player is {p.state} - starting fleet generation")
                     ships = [ship for ship in p.get_ships]
                     while ships:
+                        logger.debug(f"\tStarting ship placement - ships left {len(ships)}")
                         ship = ships.pop()
+                        logger.debug(f"\tShip: {ship.name}")
                         self.UI.output(GameRules.OUTPUTS[3].format(ship.name))
                         try:
                             x, y = self.UI.get_coords(GameRules.OUTPUTS[0])
@@ -109,7 +138,8 @@ class Game:
                         x = int(x)
                         y = int(y)
                         h_v = self.UI.get_selection(GameRules.OUTPUTS[1])
-                        if self.__check(x, y, h_v, p):
+                        if not self._check(x, y, h_v, p):
+                            logger.debug("Passed check, failed placing")
                             self.UI.output(
                                 GameRules.OUTPUTS[4].format(ship.name, x, y, h_v)
                             )
@@ -121,10 +151,13 @@ class Game:
                             else Ship.Direction.VERTICAL
                         )
                         ship.place_ship(x, y, p.board)
+                        logger.debug(f"\tPlaced {ship.name} at ({x}, {y}, {h_v})")
+        logger.info("Exiting set-up and starting game loop")
         self.start()
 
     @property
     def any_won(self) -> bool:
+        logger.info("Checking if any player has won")
         for p in self.player:
             if p.destroyed:
                 self.stop()
@@ -132,18 +165,24 @@ class Game:
         return False
 
     def output_player(self, player: Player.Player, hidden: bool = True):
+        logger.info(f"Is {'' if hidden else 'not'} outputing to screen")
         self.UI.output(player.board.output_readable(hidden=hidden))
 
     @property
     def _get_turn(self):
+        logger.info("Init turn generator")
+        players: list[str] = list(self.players_dict.keys())
         turn = 0
         max_turns = GameRules.SIZE**2
         while turn < max_turns and not self.any_won:
-            for player in self.player:
-                yield turn, player
+            attacker = self.players_dict[players[turn % 2]]
+            defender = self.players_dict[players[(turn + 1) % 2]]
+            logger.debug(f"yielding {turn} {attacker.name} {defender.name}")
+            yield turn, attacker, defender
             turn += 1
 
     def _take_shot(self):
+        logger.info("Getting player input for taking a shot")
         while True:
             try:
                 x, y = self.UI.get_coords(GameRules.OUTPUTS[0])
@@ -161,6 +200,7 @@ class Game:
         Take a turn, the presumption is that the given player is the player being worked on.
         Meaning its the other players turn other than the given player.
         """
+        logger.info(f"{attacker.name} is attacking {defender.name}.")
         while True:
             self.UI.output(GameRules.OUTPUTS[9].format(defender.name))
 
@@ -171,6 +211,7 @@ class Game:
 
             if defender.board.get(x, y).hit:
                 self.UI.output(GameRules.OUTPUTS[14])
+                logger.debug("\tLocation already selected")
                 continue
             fleet, tile = defender.take_at_self_shot(x, y)
             name = tile.has.name if tile.has is Ship.Ship else "nothing"
@@ -183,17 +224,12 @@ class Game:
 
     def take_turns(self):
         # TODO: Might still be goofy
-        players: list[str] = list(self.players_dict.keys())
-        turn = 0
-        max_turns = GameRules.SIZE**2
+        logger.info("Taking a turn")
 
-        while turn < max_turns and self.any_won:
-            attacker: Player.Player = self.players_dict[players[turn % 2]]
-            defender: Player.Player = self.players_dict[players[(turn + 1) % 2]]
-
+        for turn, attacker, defender in self._get_turn:
+            logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
             self.UI.output(GameRules.OUTPUTS[12].format(turn, defender.name))
             self._take_turn(attacker, defender)
-            turn += 1
 
 
 if __name__ == "__main__":
