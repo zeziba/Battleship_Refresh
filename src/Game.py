@@ -225,6 +225,7 @@ class Game:
     def take_turns(self):
         # TODO: Might still be goofy
         logger.info("Taking a turn")
+        UI.UI.clear_screen()
 
         for turn, attacker, defender in self._get_turn:
             logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
