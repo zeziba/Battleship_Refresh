@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "Battleship_revisited"
-version = "0.0.1"
-description = "Battleship the Game"
+version = "0.1.0"
+description = "A terminal-based Battleship game"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     { name = "Charles Engen", email = "owenengen@gmail.com" }
 ]
@@ -18,8 +18,12 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/zeziba/Battleship_revisited"
-"Bug Tracker" = "https://github.com/zeziba/Battleship_revisited/issues"
+Homepage = "https://github.com/zeziba/Battleship_Refresh"
+"Bug Tracker" = "https://github.com/zeziba/Battleship_Refresh/issues"
+
+[project.scripts]
+battleship = "src.main:run"
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["src"]
