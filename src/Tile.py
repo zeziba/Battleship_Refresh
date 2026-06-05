@@ -1,7 +1,10 @@
+from __future__ import annotations
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
-import GameRules
-from Ship import Ship
+if TYPE_CHECKING:
+    import GameRules
+    from Ship import Ship
 
 
 @dataclass

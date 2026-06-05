@@ -1,11 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Any, Generator
-
-import Board
-import Fleet
-import Ship
 from AI import HuntAndTargetAI
+
+if TYPE_CHECKING:
+    import Board
+    import Fleet
+    import Ship
 
 
 class State(Enum):
