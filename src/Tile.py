@@ -1,35 +1,36 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import GameRules
+from Ship import Ship
 
 
 @dataclass
 class Tile:
-    __contains: None
-    __hit: False = field(default=bool)
+    _contains: Ship | None
+    _hit: bool = False
 
     @property
     def hit(self) -> bool:
-        return self.__hit
+        return self._hit
 
     @hit.setter
     def hit(self, value: bool) -> None:
         if not self.hit:
-            self.__hit = value
+            self._hit = value
 
     @property
     def contains(self) -> bool:
-        return self.__contains is not None
+        return self._contains is not None
 
     @contains.setter
     def contains(self, value) -> None:
         if self.contains is True:
             raise IndexError(f"Location already has {self.contains}")
-        self.__contains = value
+        self._contains = value
 
     @property
     def has(self) -> object:
-        return self.__contains
+        return self._contains
 
     @property
     def title_logo(self, hidden: bool = True) -> str:

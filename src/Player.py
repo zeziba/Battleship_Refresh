@@ -12,26 +12,26 @@ class State(Enum):
 
 @dataclass()
 class Player:
-    __name: str
-    __state: State
-    __board: Board.Board
-    __fleet: Fleet.GeneralFleet
+    _name: str
+    _state: State
+    _board: Board.Board
+    _fleet: Fleet.GeneralFleet
 
     @property
     def name(self):
-        return self.__name
+        return self._name
 
     @property
     def state(self) -> State:
-        return self.__state
+        return self._state
 
     @property
     def fleet(self) -> Fleet.GeneralFleet:
-        return self.__fleet
+        return self._fleet
 
     @property
     def board(self) -> Board.Board:
-        return self.__board
+        return self._board
 
     def generate_fleet(self) -> None:
         if self.state is State.AI:
@@ -40,7 +40,7 @@ class Player:
             self.fleet.generate()
 
     @property
-    def get_ships(self) -> iter:
+    def get_ships(self):
         for ship in self.fleet.fleet:
             yield self.fleet.fleet[ship]
 

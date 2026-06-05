@@ -13,13 +13,13 @@ class Board:
     __tiles: list[Tile.Tile] = field(init=False, default_factory=list[Tile.Tile])
 
     @property
-    def tiles(self) -> tuple[Tile.Tile]:
+    def tiles(self) -> tuple[Tile.Tile, ...]:
         return tuple(self.__tiles)
 
     def get(self, px, py) -> Tile.Tile:
         return self.tiles[px + py * SIZE]
 
-    def tiles_set(self, x: int, y: int, tile: Tile) -> Tile.Tile:
+    def tiles_set(self, x: int, y: int, tile: Tile.Tile) -> Tile.Tile:
         size = SIZE - 1
         if (size >= x >= 0) and (size >= y >= 0):
             self.__tiles[x + y * SIZE] = tile
@@ -48,12 +48,10 @@ class Board:
                 ]
             )
 
-    def output_array(self) -> tuple[int]:
-        score = (
-            lambda hit, contains: 1
+    def output_array(self) -> tuple[int, ...]:
+        score = lambda hit, contains: (
+            1
             if hit is True and contains is not None
-            else 1
-            if hit is True and contains is None
-            else 0
+            else 1 if hit is True and contains is None else 0
         )
         return tuple(score(tile.hit, tile.contains) for tile in self.tiles)

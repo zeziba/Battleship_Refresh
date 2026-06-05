@@ -1,11 +1,11 @@
 from dataclasses import dataclass, field
 
-import Board as Board
-import Fleet as Fleet
-import GameRules as GameRules
-import Player as Player
+import Board
+import Fleet
+import GameRules
+import Player
 import Ship
-import UI as UI
+import UI
 
 TESTING = False
 
@@ -24,7 +24,7 @@ class Game:
     """
 
     players: tuple[bool, bool]
-    __players: dict = field(default_factory=dict)
+    players_dict: dict = field(default_factory=dict)
     state: GameRules.State = field(default=GameRules.State.STOPPED)
 
     def __post_init__(self):
@@ -32,9 +32,9 @@ class Game:
         self.UI = UI.UI()
 
     @property
-    def player(self) -> iter:
-        for _p in self.__players:
-            yield self.__players[_p]
+    def player(self):
+        for _p in self.players_dict:
+            yield self.players_dict[_p]
 
     def stop(self) -> None:
         self.state = GameRules.State.STOPPED
@@ -50,7 +50,7 @@ class Game:
         for index, i in enumerate(self.players):
             state = Player.State.AI if i is False else Player.State.PERSON
             name = f"p{index}"
-            self.__players[name] = Player.Player(
+            self.players_dict[name] = Player.Player(
                 name, state, Board.Board(), Fleet.GeneralFleet()
             )
 
@@ -120,7 +120,7 @@ class Game:
         self.UI.output(player.board.output_readable(hidden=hidden))
 
     @property
-    def __get_turn(self) -> iter:
+    def __get_turn(self):
         turn = 0
         max_turns = GameRules.SIZE ** 2
         while turn < max_turns and not self.any_won:
@@ -153,7 +153,7 @@ class Game:
                 self.UI.output(GameRules.OUTPUTS[14])
                 continue
             tile_state = _player.take_at_self_shot(x, y)
-            name = tile_state[1].has.name if tile_state[1].contains else "nothing"
+            name = tile_state[1].has.name if tile_state[1].has is Ship.Ship else "nothing"
             self.UI.output(GameRules.OUTPUTS[10].format(x, y, name))
             self.output_player(_player)
             break

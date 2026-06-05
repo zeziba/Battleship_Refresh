@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto, unique
 
-import Board
+from Board import Board, GameRules
+from Tile import Tile
 
 
 @unique
@@ -12,8 +13,8 @@ class Direction(Enum):
 
 @dataclass()
 class Ship:
-    name: field(default_factory=str)
-    length: field(default_factory=int)
+    name: str = ""
+    length: int = 0
 
     def contains(self, px: int, py: int) -> bool:
         return self.set_pos(px, py) in self.positions
@@ -36,14 +37,14 @@ class Ship:
             y = start_y + i * v
             yield x, y
 
-    def place_ship(self, start_x: int, start_y: int, board: Board.Board) -> bool:
+    def place_ship(self, start_x: int, start_y: int, board: Board) -> bool:
         if len(self.positions) == 0:
             for x, y in self.possible_places(
                 start_x, start_y, self.length, self.directionality
             ):
-                if Board.GameRules.check_xy(x, y):
+                if GameRules.check_xy(x, y):
                     self.positions[self.set_pos(x, y)] = board.tiles_set(
-                        x, y, Board.Tile.Tile(self, False)
+                        x, y, Tile(self, False)
                     )
                 else:
                     raise IndexError(f"({x},{y}) is not a valid move")
@@ -76,6 +77,6 @@ class Ship:
         self.__directionality = value
 
     def __post_init__(self):
-        self.__directionality: Direction.VERTICAL = field(default=Direction)
+        self.__directionality: Direction = Direction.VERTICAL
         self.hit_points = self.length
         self.positions = dict()
