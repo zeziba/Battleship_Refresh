@@ -57,23 +57,40 @@ FLEET = {
     "DESTROYER": 3,
 }
 
-OUTPUTS = (
-    "Please enter in your coords: x y\n\t",
-    "Please enter in your directionality: h -> horizontal or v -> vertical\n\t",
-    f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t",
-    f"Placing {Colors.GREEN}{{}}{Colors.END}",
-    f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location.",
-    "Failed to place {} as input was mangled",
-    f"Input must be in the form of {Colors.CYAN}<int> <int>{Colors.END} {{}}",
-    "\nExample:\n1 3",
-    "\nExample:\n<h|v>",
-    f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}",
-    f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} {{}}",
-    "Coordinates are not valid, attempt again",
-    f"Currently turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted",
-    f"{Colors.GREEN}{{}}{Colors.END} has won the game!",
-    f"Location has {Colors.RED}already been struck once{Colors.END} before try again.",
-)
+# OUTPUTS = (
+#     "Please enter in your coords: x y\n\t",
+#     "Please enter in your directionality: h -> horizontal or v -> vertical\n\t",
+#     f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t",
+#     f"Placing {Colors.GREEN}{{}}{Colors.END}",
+#     f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location.",
+#     "Failed to place {} as input was mangled",
+#     f"Input must be in the form of {Colors.CYAN}<int> <int>{Colors.END} {{}}",
+#     "\nExample:\n1 3",
+#     "\nExample:\n<h|v>",
+#     f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}",
+#     f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} {{}}",
+#     "Coordinates are not valid, attempt again",
+#     f"Current turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted",
+#     f"{Colors.GREEN}{{}}{Colors.END} has won the game!",
+#     f"Location has {Colors.RED}already been struck once{Colors.END} before try again.",
+# )
+
+class Output(StrEnum):
+    COORD_ENTER = "Please enter in your coords: x y\n\t"
+    DIR_ENTER = "Please enter in your directionality: h -> horizontal or v -> vertical\n\t"
+    START_LOCATION = f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t"
+    PLACE = f"Placing {Colors.GREEN}{{}}{Colors.END}"
+    FAILED_PLACE = f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location."
+    MANGLED_PLACE = "Failed to place {} as input was mangled"
+    WRONG_INPUT = f"Input must be in the form of {Colors.CYAN}<int> <int>{Colors.END} {{}}"
+    EXAMPLE_1 = "\nExample:\n1 3"
+    EXAMPLE_2 = "\nExample:\n<h|v>"
+    PRE_SHOT = f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}"
+    SHOT_AT = f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} {{}}"
+    INVALID_COORD = "Coordinates are not valid, attempt again"
+    CURRENT_TURN = f"Currently turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted"
+    WON_GAME = f"{Colors.GREEN}{{}}{Colors.END} has won the game!"
+    STRUCK_AGAIN = f"Location has {Colors.RED}already been struck once{Colors.END} before try again."
 
 
 class State(Enum):

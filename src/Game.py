@@ -125,23 +125,23 @@ class Game:
                         logger.debug(f"\tStarting ship placement - ships left {len(ships)}")
                         ship = ships.pop()
                         logger.debug(f"\tShip: {ship.name}")
-                        self.UI.output(GameRules.OUTPUTS[3].format(ship.name))
+                        self.UI.output(GameRules.Output.PLACE.format(ship.name))
                         try:
-                            x, y = self.UI.get_coords(GameRules.OUTPUTS[0])
+                            x, y = self.UI.get_coords(GameRules.Output.COORD_ENTER)
                         except ValueError as error:
-                            self.UI.output(GameRules.OUTPUTS[5].format(ship.name))
+                            self.UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
                             self.UI.output(
-                                GameRules.OUTPUTS[6].format(GameRules.OUTPUTS[7])
+                                GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1)
                             )
                             ships.append(ship)
                             continue
                         x = int(x)
                         y = int(y)
-                        h_v = self.UI.get_selection(GameRules.OUTPUTS[1])
+                        h_v = self.UI.get_selection(GameRules.Output.DIR_ENTER)
                         if not self._check(x, y, h_v, p):
                             logger.debug("Passed check, failed placing")
                             self.UI.output(
-                                GameRules.OUTPUTS[4].format(ship.name, x, y, h_v)
+                                GameRules.Output.FAILED_PLACE.format(ship.name, x, y, h_v)
                             )
                             ships.append(ship)
                             continue
@@ -186,14 +186,14 @@ class Game:
         logger.info("Getting player input for taking a shot")
         while True:
             try:
-                x, y = self.UI.get_coords(GameRules.OUTPUTS[0])
+                x, y = self.UI.get_coords(GameRules.Output.COORD_ENTER)
             except ValueError as error:
-                self.UI.output(GameRules.OUTPUTS[11])
+                self.UI.output(GameRules.Output.INVALID_COORD)
             else:
                 if GameRules.check_xy(x, y):
                     break
                 else:
-                    self.UI.output(GameRules.OUTPUTS[11])
+                    self.UI.output(GameRules.Output.INVALID_COORD)
         return x, y
 
     def _take_turn(self, attacker: Player.Player, defender: Player.Player) -> None:
@@ -203,7 +203,7 @@ class Game:
         """
         logger.info(f"{attacker.name} is attacking {defender.name}.")
         while True:
-            self.UI.output(GameRules.OUTPUTS[9].format(defender.name))
+            self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
 
             if attacker.state is Player.State.AI:
                 x, y = attacker._ai_brain.get_shot()
@@ -211,12 +211,12 @@ class Game:
                 x, y = self._take_shot()
 
             if defender.board.get(x, y).hit:
-                self.UI.output(GameRules.OUTPUTS[14])
+                self.UI.output(GameRules.Output.STRUCK_AGAIN)
                 logger.debug("\tLocation already selected")
                 continue
             fleet, tile = defender.take_at_self_shot(x, y)
             name = tile.has.name if tile.has is Ship.Ship else "nothing"
-            self.UI.output(GameRules.OUTPUTS[10].format(x, y, name))
+            self.UI.output(GameRules.Output.SHOT_AT.format(x, y, name))
             self.output_player(defender)
 
             if attacker.state is Player.State.AI and tile.has:
@@ -230,7 +230,7 @@ class Game:
 
         for turn, attacker, defender in self._get_turn:
             logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
-            self.UI.output(GameRules.OUTPUTS[12].format(turn, defender.name))
+            self.UI.output(GameRules.Output.CURRENT_TURN.format(turn, defender.name))
             self._take_turn(attacker, defender)
 
 
