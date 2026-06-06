@@ -5,7 +5,7 @@ import GameRules
 from Ship import Ship, Direction
 
 Fleet: Enum = Enum("Fleet", {name: auto() for name in GameRules.FLEET})
-FLEET = {ship: GameRules.FLEET[ship.name] for ship in list(Fleet)} # pyright: ignore[reportArgumentType]
+FLEET: dict[str, int] = {ship: GameRules.FLEET[ship.name] for ship in list(Fleet)} # pyright: ignore[reportArgumentType]
 
 
 @dataclass
@@ -33,24 +33,3 @@ class GeneralFleet:
             if ship is other_ship:
                 continue
             yield self.fleet[other_ship]
-
-    def can_place(self, ship: Fleet, sx: int, sy: int) -> bool: # pyright: ignore[reportInvalidTypeForm]
-        if GameRules.check_xy(sx, sy):
-            x, y = sx, sy
-            if ship.directionality is Direction.HORIZONTAL:
-                x += ship.length
-            else:
-                y += ship.length
-            if GameRules.check_xy(x, y):
-                possible = Ship.possible_places(
-                    sx, sy, ship.length, ship.directionality
-                )
-                if any(
-                    other.contains(px, py)
-                    for other in self.other_ships(ship)
-                    for px, py in possible
-                ):
-                    return False
-                return True
-            return False
-        return False

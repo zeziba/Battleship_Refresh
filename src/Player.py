@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum, auto, StrEnum
 from typing import Any, Generator
 
 if TYPE_CHECKING:
@@ -11,15 +11,17 @@ if TYPE_CHECKING:
     from AI import BattleShipAI
 
 
-class State(Enum):
-    PERSON = auto()
-    AI = auto()
+class Difficulty(StrEnum):
+    PLAYER = auto()
+    EASY = auto()
+    MEDIUM = auto()
+    HARD = auto()
 
 
 @dataclass()
 class Player:
     _name: str
-    _state: State
+    _difficulty: Difficulty
     _board: Board.Board
     _fleet: Fleet.GeneralFleet
     _ai_brain: BattleShipAI | None = None
@@ -29,8 +31,8 @@ class Player:
         return self._name
 
     @property
-    def state(self) -> State:
-        return self._state
+    def difficulty(self) -> Difficulty:
+        return self._difficulty
 
     @property
     def fleet(self) -> Fleet.GeneralFleet:
@@ -41,7 +43,7 @@ class Player:
         return self._board
 
     def generate_fleet(self) -> None:
-        if self.state is State.AI:
+        if self.difficulty is not Difficulty.PLAYER:
             self.fleet.generate()
         else:
             self.fleet.generate()
