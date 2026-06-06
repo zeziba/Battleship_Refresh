@@ -43,7 +43,9 @@ class Random(BattleShipAI):
             self.shots_taken.add((x, y))
             return x, y
 
-        return self.left_overs.pop()
+        x, y = random.choice(self.left_overs)
+        self.left_overs.remove((x, y))
+        return x, y
 
     def register_hit(self, x: int, y: int, has_sunk: bool = False):
         for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
