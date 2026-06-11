@@ -123,7 +123,6 @@ class Game:
         self._set_up()
         for p in self.iter_players:
             logger.info(f"\tPlayer {p}")
-            p.board.generate_board()
             logger.info(f"Player is {p.difficulty} - starting fleet generation")
             if TESTING:
                 logger.info("\tTesting enabled - generic ship placement")
