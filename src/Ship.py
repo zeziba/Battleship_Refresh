@@ -27,9 +27,7 @@ class Ship:
         return False
 
     @staticmethod
-    def possible_places(
-        start_x: int, start_y: int, length: int, directionality: Direction
-    ):
+    def possible_places(start_x: int, start_y: int, length: int, directionality: Direction):
         h = 1 if directionality is Direction.HORIZONTAL else 0
         v = 0 if directionality is Direction.HORIZONTAL else 1
         for i in range(length):
@@ -39,13 +37,9 @@ class Ship:
 
     def place_ship(self, start_x: int, start_y: int, board: Board) -> bool:
         if len(self.positions) == 0:
-            for x, y in self.possible_places(
-                start_x, start_y, self.length, self.directionality
-            ):
+            for x, y in self.possible_places(start_x, start_y, self.length, self.directionality):
                 if GameRules.check_xy(x, y):
-                    self.positions[self.set_pos(x, y)] = board.tiles_set(
-                        x, y, Tile(self, False)
-                    )
+                    self.positions[self.set_pos(x, y)] = board.tiles_set(x, y, Tile(self, False))
                 else:
                     raise IndexError(f"({x},{y}) is not a valid move")
             return True

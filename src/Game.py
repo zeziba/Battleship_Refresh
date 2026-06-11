@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Optional
 from Logger import get_logger
 from enum import StrEnum, auto
 
@@ -62,21 +63,19 @@ class Game:
         for index, difficulty in enumerate(self.players):
             logger.debug(f"Attempting to init - {index}\t{difficulty}")
             name = f"p_{difficulty}_{index}"
-            self.players_dict[name] = Player.Player(
-                name, difficulty, Board.Board(), Fleet.GeneralFleet()
-            )
+            self.players_dict[name] = Player.Player(name, difficulty, Board.Board(), Fleet.GeneralFleet())
             logger.debug(f"Finished init of {name} as {difficulty}")
 
     def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:
         """
         Validates whether a ship can be placed at the given coordinates and orientation.
-        
+
         :Args:
             :p: The Player object placing the ship.
             :ship: The Ship object being placed.
             :coords: A tuple of (x, y) integers representing the starting position.
             :h_v: A string ('h' or 'v') representing the orientation.
-            
+
         :Returns:
             bool: True if the placement is valid, False otherwise.
         """
@@ -86,7 +85,7 @@ class Game:
         if h_v not in ("h", "v") or len(h_v) != 1:
             self.UI.output(GameRules.Output.DIR_INVALID)
             return False
-        directionality = Ship.Direction.HORIZONTAL if h_v == 'h' else Ship.Direction.VERTICAL
+        directionality = Ship.Direction.HORIZONTAL if h_v == "h" else Ship.Direction.VERTICAL
         if not GameRules.check_xy(x, y):
             return False
 
@@ -96,7 +95,7 @@ class Game:
             self.UI.output(GameRules.Output.FAILED_PLACE.format(ship.name, x, y, directionality))
             logger.warning(ex)
             return False
-        
+
         for px, py in projected_coords:
             for existing_ship in p.get_ships:
                 if existing_ship.is_placed and existing_ship.contains(px, py):
@@ -105,22 +104,24 @@ class Game:
 
         return True
 
+    def _testing_ship_placer(self, p: Player.Player, i: int = 0):
+        for ship in p.get_ships:
+            ship.place_ship(i := i + 1, 0, p.board)
+
+
     def set_up(self) -> None:
         logger.info("Starting set-up")
         self._set_up()
         for p in self.player:
             logger.info(f"\tPlayer {p}")
-            i = 0
             p.board.generate_board()
             p.fleet.generate()
+            logger.info(f"Player is {p.difficulty} - starting fleet generation")
             if TESTING:
                 logger.info("\tTesting enabled - generic ship placement")
-                for ship in p.get_ships:
-                    ship.place_ship(i := i + 1, 0, p.board)
+                self._testing_ship_placer(p)
                 continue
-            if p.difficulty != Difficulty.PLAYER:
-                logger.info(f"Player is {p.difficulty} - starting fleet generation")
-                import random
+            if p.is_ai:
 
                 if p.difficulty == Difficulty.EASY:
                     p._ai_brain = AI.Random()
@@ -128,73 +129,33 @@ class Game:
                     p._ai_brain = AI.HuntAndTargetAIAdv()
                 # elif p.difficulty == Difficulty.HARD:
                 #     p._ai_brain = AI.ProbabilityAI()
-                for ship in p.get_ships:
-                    logger.debug(f"\tAttemtpting to place {ship.name}")
-                    while True:
-                        h_v = random.choice(["h", "v"])
-                        if "h" == h_v:
-                            x = random.randint(0, GameRules.SIZE - 1 - ship.length)
-                            y = random.randint(0, GameRules.SIZE - 1)
-                        else:
-                            x = random.randint(0, GameRules.SIZE - 1)
-                            y = random.randint(0, GameRules.SIZE - 1 - ship.length)
-                        if self._check((x, y), h_v, p, ship):
-                            ship.directionality = (
-                                Ship.Direction.HORIZONTAL
-                                if h_v == "h"
-                                else Ship.Direction.VERTICAL
-                            )
-                            ship.place_ship(x, y, p.board)
-                            logger.debug(
-                                f"\tSucceeded to place {ship.name} at ({x}, {y}, {h_v})"
-                            )
-                            break
-                        logger.debug(
-                            f"\tFailed to place {ship.name} at ({x}, {y}, {h_v})"
-                        )
+
+                p.auto_ship_placement(self._check, GameRules.SIZE)
                 continue
             # Is player
-            logger.info(f"Player is {p.difficulty} - starting fleet generation")
-            ships = [ship for ship in p.get_ships]
-            while ships:
-                logger.debug(
-                    f"\tStarting ship placement - ships left {len(ships)}"
-                )
-                ship = ships.pop()
-                logger.debug(f"\tShip: {ship.name}")
-                self.UI.output(GameRules.Output.PLACE.format(ship.name))
-                try:
-                    x, y = self.UI.get_coords(GameRules.Output.COORD_ENTER)
-                except ValueError as error:
-                    self.UI.output(
-                        GameRules.Output.MANGLED_PLACE.format(ship.name)
-                    )
-                    self.UI.output(
-                        GameRules.Output.WRONG_INPUT.format(
-                            GameRules.Output.EXAMPLE_1
-                        )
-                    )
-                    ships.append(ship)
-                    continue
-                x = int(x)
-                y = int(y)
-                h_v = self.UI.get_selection(GameRules.Output.DIR_ENTER)
-                if not self._check((x, y), h_v, p, ship):
-                    logger.debug("Passed check, failed placing")
-                    self.UI.output(
-                        GameRules.Output.FAILED_PLACE.format(
-                            ship.name, x, y, h_v
-                        )
-                    )
-                    ships.append(ship)
-                    continue
-                ship.directionality = (
-                    Ship.Direction.HORIZONTAL
-                    if h_v == "h"
-                    else Ship.Direction.VERTICAL
-                )
-                ship.place_ship(x, y, p.board)
-                logger.debug(f"\tPlaced {ship.name} at ({x}, {y}, {h_v})")
+            for ship in p.get_ships:
+                valid_placement = False
+                logger.debug(f"\tAttempting to place Ship: {ship.name}")
+                while not valid_placement:
+                    self.UI.output(GameRules.Output.PLACE.format(ship.name))
+                    raw_coords = self.UI.get_selection(GameRules.Output.COORD_ENTER_GENERIC)
+                    parsed_coord = self.UI.parse_coord(raw_coords)
+                    if parsed_coord is None:
+                        self.UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
+                        self.UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
+                        continue
+                    x, y = parsed_coord
+                    if not GameRules.check_xy(x, y):
+                        self.UI.output(GameRules.Output.OUTSIDE_BOARD.format(x, y))
+                        continue
+                    h_v = self.UI.get_selection(GameRules.Output.DIR_ENTER)
+                    valid_placement = self._check((x, y), h_v, p, ship)
+
+                    if valid_placement:
+                        ship.directionality = Ship.Direction.HORIZONTAL if h_v.strip().lower() == 'h' else Ship.Direction.VERTICAL
+
+                        ship.place_ship(x, y, p.board)
+                        logger.debug(f"\tPlaced {ship.name} at ({x}, {y}, {h_v})")
         logger.info("Exiting set-up and starting game loop")
         self.start()
 
@@ -291,6 +252,6 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game((Difficulty.EASY, Difficulty.MEDIUM))
+    game = Game((Difficulty.PLAYER, Difficulty.MEDIUM))
     game.set_up()
     game.take_turns()

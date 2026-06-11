@@ -27,3 +27,6 @@ battleship = "src.main:run"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src"]
+
+[tool.black]
+line-length = 119
