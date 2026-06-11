@@ -20,6 +20,7 @@ class UI:
     delay: float = 0.5
 
     def get_valid_coordinates(self, prompt_message: str) -> tuple[int, int]:
+        logger.debug("Attempting to get valid coords")
         while True:
             raw_input = input(f"{prompt_message}")
             parsed_xy = self.parse_coord(raw_input)
@@ -36,6 +37,7 @@ class UI:
             return x, y
 
     def parse_coord(self, raw_input: str) -> Optional[tuple[int, int]]:
+        logger.debug(f"Parsing coords = {r'{}'.format(bytes(raw_input, 'utf-8'))}")
         clean_input = raw_input.strip().lower()
         if not clean_input:
             return None
@@ -65,6 +67,7 @@ class UI:
         return None
 
     def get_selection(self, selection: str) -> str:
+        logger.debug("Getting input from user")
         return input(f"{selection}")
 
     def output(self, selection: str) -> None:
@@ -72,17 +75,21 @@ class UI:
 
     @staticmethod
     def clear_screen():
+        logger.debug("Clearing Screen")
         os.system("cls" if os.name == "nt" else "clear")
 
     def pause(self, seconds: Optional[float] = None):
+        logger.debug("Initating Pause")
         time.sleep(seconds if seconds is not None else self.delay)
 
     @staticmethod
     def prompt_to_continue():
+        logger.debug("Waiting for key press to continue")
         input("\nPress [Enter] to continue...")
 
     @staticmethod
     def print_board(board: Board.Board, hide_ships=False):
+        logger.debug("Starting Board print")
         header_row = "   " + " ".join([str(i) for i in range(board.width)])
         print(header_row)
 
@@ -93,3 +100,10 @@ class UI:
                 tile: Tile.Tile = board.get(x, y)
                 row_str += tile.get_rendered_logo(hide_ships)
             print(row_str)
+
+
+if __name__ == "__main__":
+    # Test parse of raw coords
+    ui = UI(0.5)
+    ui.parse_coord("A5")
+    ui.parse_coord("spam\\neggs")

@@ -42,7 +42,7 @@ class Game:
 
     def __post_init__(self):
         logger.debug("Post-init")
-        self._set_up()
+        self.set_up()
         self.UI = UI.UI()
 
     @property
@@ -115,6 +115,7 @@ class Game:
         return True
 
     def _testing_ship_placer(self, p: Player.Player, i: int = 0):
+        logger.debug("TESTING: Generating ships")
         for ship in p.get_ships:
             ship.place_ship(i := i + 1, 0, p.board)
 
@@ -206,6 +207,7 @@ class Game:
             turn += 1
 
     def _get_valid_shot(self, attacker: Player.Player, defender: Player.Player):
+        logger.debug("Attemping to get valid shot")
         while True:
             self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
             x, y = attacker.choose_target(self.UI)
@@ -263,5 +265,4 @@ class Game:
 
 if __name__ == "__main__":
     game = Game((Difficulty.MEDIUM, Difficulty.MEDIUM))
-    game.set_up()
     game.take_turns()

@@ -37,29 +37,36 @@ class Player:
 
     @property
     def name(self):
+        logger.debug("Getting name")
         return self._name
 
     @property
     def difficulty(self) -> Difficulty:
+        logger.debug(f"Getting {self.name}'s difficulty")
         return self._difficulty
 
     @property
     def fleet(self) -> Fleet.GeneralFleet:
+        logger.debug(f"Gettings {self.name}'s fleet")
         return self._fleet
 
     @property
     def board(self) -> Board.Board:
+        logger.debug(f"Gettings {self.name}'s board")
         return self._board
 
     @property
     def is_ai(self) -> bool:
+        logger.debug(f"Getting if {self.name} is an ai")
         return self.difficulty != Difficulty.PLAYER
 
     @property
     def get_ships(self) -> Generator[Ship.Ship, Any, None]:
+        logger.debug(f"Getting Generator for {self.name}'s fleet")
         yield from self._fleet.ships
 
     def take_at_self_shot(self, x: int, y: int) -> tuple[Fleet.GeneralFleet, Board.Tile.Tile]:
+        logger.debug(f"{self.name} is taking a shot at self")
         tile = self._board.get(x, y)
         tile.hit = True
 
@@ -67,9 +74,11 @@ class Player:
         return self._fleet, tile
 
     def is_already_targeted(self, x, y) -> bool:
+        logger.debug(f"Checking if ({x},{y}) in {self.name}'s board has been targeted")
         return self.board.get(x, y).hit
 
     def process_shot_result(self, x: int, y: int, tile: Tile.Tile):
+        logger.debug(f"Processing shot at ({x}, {y}) on {self.name}'s tile")
         if self._ai_brain and self.is_ai and tile.has:
             if tile.has.is_sunk:
                 self._ai_brain.ships_left.pop(tile.has.name, None)
@@ -77,6 +86,7 @@ class Player:
             self.take_at_self_shot(x, y)
 
     def choose_target(self, UI: UI.UI) -> tuple[int, int]:
+        logger.debug(f"Starting target acquisition for {self.name}")
         if self._ai_brain and self.is_ai:
             x, y = self._ai_brain.get_shot()
             UI.output(Output.AI_SHOT_TAKEN.format(x, y))
@@ -93,6 +103,7 @@ class Player:
         return x, y
 
     def auto_ship_placement(self):
+        logger.debug(f"Starting auto ship placement for {self.name}")
         for ship in self._fleet.ships:
             logger.debug(f"\tAttemtpting to place {ship.name}")
             placed = False

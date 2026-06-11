@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
 
+from Logger import get_logger
+
+logger = get_logger(__name__)
+
 import GameRules
 from Ship import Ship
 
@@ -17,6 +21,7 @@ class GeneralFleet:
     _fleet: dict[FleetType, Ship] = field(default_factory=dict)
 
     def __post_init__(self):
+        logger.debug("Post Init for GeneralFleet")
         rule_map = {
             FleetType.CARRIER: "CARRIER",
             FleetType.BATTLESHIP: "BATTLESHIP",
@@ -42,19 +47,23 @@ class GeneralFleet:
 
     @property
     def ships(self) -> list[Ship]:
+        logger.debug("Getting GeneralFleet._fleet as list(Ship)")
         return list(self._fleet.values())
     
     @property
     def all_sunk(self):
+        logger.debug("Checking if each ship is sunk")
         return all(ship.is_sunk for ship in self.ships)
 
     def hit(self, px: int, py: int) -> bool:
+        logger.debug(f"Checking if ({px}, {py}) is a hit")
         for ship in self.ships:
             if ship.hit(px, py):
                 return True
         return False
 
     def other_ships(self, target_ship: Ship):
+        logger.debug("Checking if ship is the target ship")
         for ship in self.ships:
             if ship is target_ship:
                 continue
