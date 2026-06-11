@@ -172,6 +172,7 @@ class Game:
         logger.info("Checking if any player has won")
         for p in self.iter_players:
             if p.fleet.all_sunk:
+                self.stop()
                 return True
         return False
 
