@@ -63,6 +63,7 @@ class Output(StrEnum):
     DIR_ENTER = "Please enter in your directionality: h -> horizontal or v -> vertical\n\t"
     DIR_INVALID = "Invalid orientation choice! Please type 'h' for horizontal or 'v' for vertical."
     START_LOCATION = f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t"
+    TRY_AGAIN = "\tLocation is already selected."
     PLACE = f"Placing {Colors.GREEN}{{}}{Colors.END}"
     FAILED_PLACE = f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location."
     OUTSIDE_BOARD = "({}, {}) is outside the board!"

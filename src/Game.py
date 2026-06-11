@@ -15,6 +15,13 @@ logger = get_logger(__name__)
 Difficulty = Player.Difficulty
 
 
+@dataclass
+class GameConfig:
+    board_width: int = GameRules.SIZE
+    board_height: int = GameRules.SIZE
+    fleet_composition: dict = field(default_factory=lambda: GameRules.FLEET)
+
+
 @dataclass()
 class Game:
     """
@@ -31,6 +38,7 @@ class Game:
     players: tuple[Difficulty, Difficulty]
     players_dict: dict[str, Player.Player] = field(default_factory=dict)
     state: GameRules.State = field(default=GameRules.State.STOPPED)
+    config: GameConfig = field(default_factory=GameConfig)
 
     def __post_init__(self):
         logger.debug("Post-init")
@@ -38,10 +46,9 @@ class Game:
         self.UI = UI.UI()
 
     @property
-    def player(self):
-        for _p in self.players_dict:
-            logger.info(f"yielding {_p}")
-            yield self.players_dict[_p]
+    def iter_players(self):
+        logger.info("yielding players")
+        yield from self.players_dict.values()
 
     def stop(self) -> None:
         self.state = GameRules.State.STOPPED
@@ -61,7 +68,12 @@ class Game:
         for index, difficulty in enumerate(self.players):
             logger.debug(f"Attempting to init - {index}\t{difficulty}")
             name = f"p_{difficulty}_{index}"
-            self.players_dict[name] = Player.Player(name, difficulty, Board.Board(), Fleet.GeneralFleet())
+            self.players_dict[name] = Player.Player(
+                name,
+                difficulty,
+                Board.Board(width=self.config.board_width, height=self.config.board_height),
+                Fleet.GeneralFleet(self.config.fleet_composition),
+            )
             logger.debug(f"Finished init of {name} as {difficulty}")
 
     def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:
@@ -109,7 +121,7 @@ class Game:
     def set_up(self) -> None:
         logger.info("Starting set-up")
         self._set_up()
-        for p in self.player:
+        for p in self.iter_players:
             logger.info(f"\tPlayer {p}")
             p.board.generate_board()
             p.fleet.generate()
@@ -160,7 +172,7 @@ class Game:
     @property
     def any_won(self) -> bool:
         logger.info("Checking if any player has won")
-        for p in self.player:
+        for p in self.iter_players:
             if p.destroyed:
                 self.stop()
                 return True
@@ -195,19 +207,17 @@ class Game:
             attacker, defender = defender, attacker
             turn += 1
 
-    def _take_shot(self):
-        logger.info("Getting player input for taking a shot")
+    def _get_valid_shot(self, attacker: Player.Player, defender: Player.Player):
         while True:
-            try:
-                x, y = self.UI.get_coords(GameRules.Output.COORD_ENTER)
-            except ValueError as error:
-                self.UI.output(GameRules.Output.INVALID_COORD)
-            else:
-                if GameRules.check_xy(x, y):
-                    break
-                else:
-                    self.UI.output(GameRules.Output.INVALID_COORD)
-        return x, y
+            self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
+            x, y = attacker.choose_target(self.UI)
+
+            if defender.is_alread_targeted(x, y):
+                logger.debug("\tLocation already selected")
+                self.UI.output(GameRules.Output.TRY_AGAIN)
+                continue
+
+            return x, y
 
     def _take_turn(self, attacker: Player.Player, defender: Player.Player) -> None:
         """
@@ -215,20 +225,9 @@ class Game:
         Meaning its the other players turn other than the given player.
         """
         logger.info(f"{attacker.name} is attacking {defender.name}.")
+        x, y = self._get_valid_shot(attacker, defender)
         while True:
-            self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
-
-            if attacker._ai_brain and attacker.is_ai:
-                x, y = attacker._ai_brain.get_shot()
-                self.UI.output(GameRules.Output.AI_SHOT_TAKEN.format(x, y))
-            else:
-                x, y = self._take_shot()
-
-            if defender.board.get(x, y).hit:
-                self.UI.output(GameRules.Output.STRUCK_AGAIN)
-                logger.debug("\tLocation already selected")
-                continue
-            fleet, tile = defender.take_at_self_shot(x, y)
+            _, tile = defender.take_at_self_shot(x, y)
             if tile.has:
                 if tile.has.is_sunk:
                     self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))

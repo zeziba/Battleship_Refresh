@@ -5,6 +5,7 @@ from enum import Enum, auto, StrEnum
 from typing import Any, Generator
 from Logger import get_logger
 from Ship import Direction
+from GameRules import Output
 
 logger = get_logger(__name__)
 
@@ -13,6 +14,7 @@ if TYPE_CHECKING:
     import Fleet
     import Ship
     import Tile
+    import UI
     from AI import BattleShipAI
 
 
@@ -72,6 +74,25 @@ class Player:
         fleet, tile = self.fleet.hit(x, y), self.board.get(x, y)
         tile.hit = True
         return fleet, tile
+    
+    def choose_target(self, UI: UI.UI) -> tuple[int, int]:
+        if self._ai_brain and self.is_ai:
+            x, y = self._ai_brain.get_shot()
+            UI.output(Output.AI_SHOT_TAKEN.format(x, y))
+        else:
+            while True:
+                raw_coords = UI.get_selection(Output.COORD_ENTER_GENERIC)
+                parsed_coord = UI.parse_coord(raw_coords)
+                if parsed_coord is None:
+                    logger.debug(f"Failed to enter proper coords with {parsed_coord}")
+                    UI.output(Output.WRONG_INPUT.format(Output.EXAMPLE_1))
+                    continue
+                else:
+                    x, y = parsed_coord
+        return x, y
+    
+    def is_alread_targeted(self, x, y) -> bool:
+        return self.board.get(x, y).hit
 
     def process_shot(self, x: int, y: int, tile: Tile.Tile):
         if self._ai_brain and self.difficulty and self.is_ai and tile.has:

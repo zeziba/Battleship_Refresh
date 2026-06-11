@@ -1,6 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
+from Logger import get_logger
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     import Tile
@@ -8,7 +11,7 @@ if TYPE_CHECKING:
 import os
 import time
 
-from GameRules import Colors, SIZE, HitTile, MissTile, EmptyTile
+from GameRules import Colors, SIZE, HitTile, MissTile, EmptyTile, Output, check_xy
 
 
 @dataclass()
@@ -47,6 +50,21 @@ class UI:
                 return x, y
         
         return None
+    
+    def take_shot(self):
+        logger.info("Getting player input for taking a shot")
+        while True:
+            try:
+                x, y = self.get_coords(Output.COORD_ENTER)
+            except ValueError as error:
+                logger.warning(error)
+                self.output(Output.INVALID_COORD)
+            else:
+                if check_xy(x, y):
+                    break
+                else:
+                    self.output(Output.INVALID_COORD)
+        return x, y
 
     def get_selection(self, selection: str) -> str:
         return input(f"{selection}")
