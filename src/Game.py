@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
 from Logger import get_logger
-from enum import StrEnum, auto
 
 import Board
 import Fleet
@@ -108,7 +106,6 @@ class Game:
         for ship in p.get_ships:
             ship.place_ship(i := i + 1, 0, p.board)
 
-
     def set_up(self) -> None:
         logger.info("Starting set-up")
         self._set_up()
@@ -152,7 +149,8 @@ class Game:
                     valid_placement = self._check((x, y), h_v, p, ship)
 
                     if valid_placement:
-                        ship.directionality = Ship.Direction.HORIZONTAL if h_v.strip().lower() == 'h' else Ship.Direction.VERTICAL
+                        _d = Ship.Direction.HORIZONTAL if h_v.strip().lower() == "h" else Ship.Direction.VERTICAL
+                        ship.directionality = _d
 
                         ship.place_ship(x, y, p.board)
                         logger.debug(f"\tPlaced {ship.name} at ({x}, {y}, {h_v})")
@@ -175,15 +173,26 @@ class Game:
 
     @property
     def _get_turn(self):
+        """
+        Infinite Turn Generator that yields the turn number, the attacking player
+        and the defending player
+        """
         logger.info("Init turn generator")
-        players: list[str] = list(self.players_dict.keys())
-        turn = 0
-        max_turns = len(self.players) * GameRules.SIZE**2
-        while turn < max_turns and not self.any_won:
-            attacker = self.players_dict[players[turn % 2]]
-            defender = self.players_dict[players[(turn + 1) % 2]]
-            logger.debug(f"yielding {turn} {attacker.name} {defender.name}")
+
+        if len(self.players_dict) != 2:
+            logger.debug("Game failed to have two players")
+            raise ValueError("Game requires exactly two players!")
+
+        player_list = list(self.players_dict.values())
+        attacker = player_list[0]
+        defender = player_list[1]
+
+        turn = 1
+
+        while not self.stopped:
             yield turn, attacker, defender
+
+            attacker, defender = defender, attacker
             turn += 1
 
     def _take_shot(self):
@@ -246,6 +255,8 @@ class Game:
             self._take_turn(attacker, defender)
             current = attacker
             # self.UI.pause(self.UI.delay)
+            if self.any_won:
+                break
 
         if current:
             self.UI.output(GameRules.Output.WON_GAME.format(current.name))
