@@ -14,7 +14,7 @@ def run():
     logger.debug("Starting Game")
 
     config = GameConfig()
-    names = Names.NameGanerator()
+    names = Names.NameGenerator()
 
     p1_mode = Difficulty.MEDIUM
     p1_name = f"(1) Admiral {names.create_random_name()}"
