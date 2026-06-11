@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import Board
     import Fleet
     import Ship
+    import Tile
     from AI import BattleShipAI
 
 
@@ -71,6 +72,12 @@ class Player:
         fleet, tile = self.fleet.hit(x, y), self.board.get(x, y)
         tile.hit = True
         return fleet, tile
+
+    def process_shot(self, x: int, y: int, tile: Tile.Tile):
+        if self._ai_brain and self.difficulty and self.is_ai and tile.has:
+            if tile.has.is_sunk:
+                self._ai_brain.ships_left.pop(tile.has.name, None)
+            self._ai_brain.register_hit(x, y, tile.has.is_sunk)
 
     def auto_ship_placement(self, checker: Callable, board_size: int):
         import random

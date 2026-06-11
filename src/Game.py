@@ -209,7 +209,7 @@ class Game:
         while True:
             self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
 
-            if attacker._ai_brain and attacker.difficulty is not Difficulty.PLAYER:
+            if attacker._ai_brain and attacker.is_ai:
                 x, y = attacker._ai_brain.get_shot()
                 self.UI.output(GameRules.Output.AI_SHOT_TAKEN.format(x, y))
             else:
@@ -220,17 +220,17 @@ class Game:
                 logger.debug("\tLocation already selected")
                 continue
             fleet, tile = defender.take_at_self_shot(x, y)
-            if tile.has and tile.has.is_sunk:
-                self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
+            if tile.has:
+                if tile.has.is_sunk:
+                    self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
+                else:
+                    self.UI.output(GameRules.Output.SHOT_AT.format(x, y, tile.has.name))
             else:
-                name = tile.has.name if tile.has is Ship.Ship else "nothing"
-                self.UI.output(GameRules.Output.SHOT_AT.format(x, y, name))
+                self.UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
             self.output_player(defender)
 
-            if attacker._ai_brain and attacker.difficulty is not Difficulty.PLAYER and tile.has:
-                if tile.has.is_sunk:
-                    attacker._ai_brain.ships_left.pop(tile.has.name)
-                attacker._ai_brain.register_hit(x, y, tile.has.is_sunk)
+            if hasattr(attacker, "process_shot"):
+                attacker.process_shot(x, y, tile)
             break
 
     def take_turns(self):
@@ -252,6 +252,6 @@ class Game:
 
 
 if __name__ == "__main__":
-    game = Game((Difficulty.PLAYER, Difficulty.MEDIUM))
+    game = Game((Difficulty.MEDIUM, Difficulty.MEDIUM))
     game.set_up()
     game.take_turns()
