@@ -1,35 +1,61 @@
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import auto, StrEnum
 
 import GameRules
-from Ship import Ship, Direction
+from Ship import Ship
 
-Fleet: Enum = Enum("Fleet", {name: auto() for name in GameRules.FLEET})
-FLEET: dict[str, int] = {ship: GameRules.FLEET[ship.name] for ship in list(Fleet)} # pyright: ignore[reportArgumentType]
+class FleetType(StrEnum):
+    CARRIER = auto()
+    BATTLESHIP = auto()
+    PATROLBOAT = auto()
+    SUBMARINE = auto()
+    DESTROYER = auto()
 
 
 @dataclass
 class GeneralFleet:
-    _fleet: dict[Fleet, Ship] = field(default_factory=dict) # pyright: ignore[reportInvalidTypeForm]
+    _fleet: dict[FleetType, Ship] = field(default_factory=dict)
+
+    def __post_init__(self):
+        rule_map = {
+            FleetType.CARRIER: "CARRIER",
+            FleetType.BATTLESHIP: "BATTLESHIP",
+            FleetType.PATROLBOAT: "PATROLBOAT",
+            FleetType.SUBMARINE: "SUBMARINE",
+            FleetType.DESTROYER: "DESTROYER"
+        }
+
+        if self._fleet:
+            temp = dict()
+            for enum_type, rule_name in rule_map.items():
+                ship_length = GameRules.FLEET[rule_name]
+                temp[enum_type] = Ship(name=rule_name, length=ship_length)
+
+            self._fleet = temp
+
+            return
+        
+
+        for enum_type, rule_name in rule_map.items():
+            ship_length = GameRules.FLEET[rule_name]
+            self._fleet[enum_type] = Ship(name=rule_name, length=ship_length)
 
     @property
-    def fleet(self) -> dict:
-        return self._fleet
-
-    def generate(self) -> None:
-        self._fleet = dict()
-        for ship in list(Fleet): # pyright: ignore[reportArgumentType]
-            # Random directionality choice for now
-            self._fleet[ship] = Ship(ship.name, FLEET[ship])
+    def ships(self) -> list[Ship]:
+        return list(self._fleet.values())
+    
+    @property
+    def all_sunk(self):
+        return all(ship.is_sunk for ship in self.ships)
 
     def hit(self, px: int, py: int) -> bool:
-        for ship in self.fleet:
-            if self.fleet[ship].hit(px, py):
+        for ship in self.ships:
+            if ship.hit(px, py):
                 return True
         return False
 
-    def other_ships(self, ship: Fleet): # pyright: ignore[reportInvalidTypeForm]
-        for other_ship in self.fleet:
-            if ship is other_ship:
+    def other_ships(self, target_ship: Ship):
+        for ship in self.ships:
+            if ship is target_ship:
                 continue
-            yield self.fleet[other_ship]
+            yield ship

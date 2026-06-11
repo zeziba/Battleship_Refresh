@@ -124,7 +124,6 @@ class Game:
         for p in self.iter_players:
             logger.info(f"\tPlayer {p}")
             p.board.generate_board()
-            p.fleet.generate()
             logger.info(f"Player is {p.difficulty} - starting fleet generation")
             if TESTING:
                 logger.info("\tTesting enabled - generic ship placement")
@@ -139,7 +138,7 @@ class Game:
                 # elif p.difficulty == Difficulty.HARD:
                 #     p._ai_brain = AI.ProbabilityAI()
 
-                p.auto_ship_placement(self._check, GameRules.SIZE)
+                p.auto_ship_placement(GameRules.SIZE)
                 continue
             # Is player
             for ship in p.get_ships:
@@ -173,7 +172,7 @@ class Game:
     def any_won(self) -> bool:
         logger.info("Checking if any player has won")
         for p in self.iter_players:
-            if p.destroyed:
+            if p.fleet.all_sunk:
                 self.stop()
                 return True
         return False
