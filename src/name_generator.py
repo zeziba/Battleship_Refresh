@@ -5,7 +5,7 @@ import random
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESOURCE_FOLDER = "resources"
 
-class NameGanerator:
+class NameGenerator:
     _first_names: set[str] = set()
     _middle_names: set[str] = set()
     _places: set[str] = set()
@@ -24,5 +24,5 @@ class NameGanerator:
     
 
 if __name__ == "__main__":
-    generator = NameGanerator()
+    generator = NameGenerator()
     print(generator.create_random_name())
