@@ -2,11 +2,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
 import random
-from typing import TYPE_CHECKING, Iterator, Optional, Any, Generator
+from typing import TYPE_CHECKING, Optional, Any, Generator
 
 from Ship import Direction
 from Logger import get_logger
-from GameRules import Output, Colors
+from GameRules import Output
 
 if TYPE_CHECKING:
     import Board

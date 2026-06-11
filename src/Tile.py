@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from GameRules import Colors, HitTile, MissTile, EmptyTile
 
 if TYPE_CHECKING:
-    import GameRules
     from Ship import Ship
 
 
