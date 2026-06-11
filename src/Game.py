@@ -170,7 +170,7 @@ class Game:
     @property
     def any_won(self) -> bool:
         logger.info("Checking if any player has won")
-        for p in self.players_dict.values():
+        for p in self.iter_players:
             if p.fleet.all_sunk:
                 return True
         return False
