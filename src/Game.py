@@ -253,8 +253,8 @@ class Game:
             self._take_turn(attacker, defender)
             current = attacker
             # self.UI.pause(self.UI.delay)
-            if turn == 100:
-                self.UI.prompt_to_continue()
+            # if turn == 100:
+            #     self.UI.prompt_to_continue()
             if self.any_won:
                 break
 

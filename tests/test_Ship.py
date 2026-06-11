@@ -56,7 +56,7 @@ class TestShip:
         assert type(resource) is src.Ship.Ship
         assert resource.name is not None
         assert resource.length >= 0
-        assert resource.hit_points >= 0
+        assert resource._hit_points >= 0
         assert resource.directionality is not None
 
     def test_ship_placement(self, resource):

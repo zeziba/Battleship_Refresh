@@ -19,17 +19,21 @@ class Direction(Enum):
 class Ship:
     name: str = ""
     length: int = 0
-    hit_points: int = length
+
+    def __post_init__(self):
+        logger.debug("Post Init")
+        self._directionality: Direction = Direction.VERTICAL
+        self._positions: dict[tuple[int, int], Tile] = dict()
 
     def contains(self, px: int, py: int) -> bool:
         logger.debug(f"Getting ({px}, {py}) of Ship<{self.name}>")
-        return self.convert_xy_to_str_coords(px, py) in self.positions
+        return (px, py) in self._positions
 
     def hit(self, px: int, py: int) -> bool:
         logger.debug(f"Checking if ({px}, {py}) hits {self.name}")
-        if self.contains(px, py) and not self.positions[self.convert_xy_to_str_coords(px, py)].hit:
-            self.positions[self.convert_xy_to_str_coords(px, py)].hit = True
-            self.hit_points -= 1
+        if self.contains(px, py) and not self._positions[(px, py)].hit:
+            self._positions[(px, py)].hit = True
+            self._hit_points -= 1
             return True
         return False
 
@@ -45,10 +49,10 @@ class Ship:
 
     def place_ship(self, start_x: int, start_y: int, board: Board) -> bool:
         logger.debug(f"Attempting to place ship {self.name}")
-        if len(self.positions) == 0:
+        if len(self._positions) == 0:
             for x, y in self.possible_places(start_x, start_y, self.length, self.directionality):
                 if GameRules.check_xy(x, y):
-                    self.positions[self.convert_xy_to_str_coords(x, y)] = board.tiles_set(x, y, Tile(self, False))
+                    self._positions[(x, y)] = board.tiles_set(x, y, Tile(self, False))
                 else:
                     raise IndexError(f"({x},{y}) is not a valid move")
             return True
@@ -57,36 +61,19 @@ class Ship:
     @property
     def is_sunk(self) -> bool:
         logger.debug(f"Checking if {self.name} is sunk")
-        return self.hit_points == 0
+        return all(tile.hit for tile in self._positions.values())
 
     @property
     def is_placed(self) -> bool:
         logger.debug(f"Checking if {self.name} is placed")
-        return len(self.positions) == self.length
-
-    @staticmethod
-    def convert_xy_to_str_coords(px: int, py: int) -> str:
-        logger.debug(f"Converting ({px}, {py}) to '{px}, {py}'")
-        return f"{px},{py}"
-
-    @staticmethod
-    def get_xy_pos(pos: str) -> tuple[int, int]:
-        logger.debug("Getting int tuple for coord from str coord")
-        x, y = pos.split(",")
-        return int(x), int(y)
+        return len(self._positions) == self.length
 
     @property
     def directionality(self):
         logger.debug(f"Getting {self.name}'s directionality")
-        return self.__directionality
+        return self._directionality
 
     @directionality.setter
     def directionality(self, value: Direction):
         logger.debug(f"Setting {self.name}'s directionality")
-        self.__directionality = value
-
-    def __post_init__(self):
-        logger.debug("Post Init")
-        self.__directionality: Direction = Direction.VERTICAL
-        self.hit_points = self.length
-        self.positions = dict()
+        self._directionality = value
