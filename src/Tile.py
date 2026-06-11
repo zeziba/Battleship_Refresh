@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from GameRules import Colors, HitTile, MissTile, EmptyTile
+
 if TYPE_CHECKING:
     import GameRules
     from Ship import Ship
@@ -35,20 +37,15 @@ class Tile:
     def has(self) -> Ship | None:
         return self._contains
 
-    @property
-    def title_logo(self, hidden: bool = True) -> str:
-        # TODO: Finish implementation
-        raise NotImplemented
-        if hidden:
-            if self.contains:
-                if self.hit:
-                    pass
-                else:
-                    pass
+    def get_rendered_logo(self, hidden: bool = True) -> str:
+        if self.hit and self.has:
+            if self.has.is_sunk:
+                return f"{Colors.LIGHT_RED}{self.has.name[0]} {Colors.END}"
+            else:
+                return HitTile
+        elif self.hit:
+            return MissTile
+        elif not hidden and self.has:
+            return f"{Colors.GREEN}{self} {Colors.END}"
         else:
-            if self.contains:
-                if self.hit:
-                    pass
-                else:
-                    pass
-        return GameRules.EmptyTile
+            return EmptyTile
