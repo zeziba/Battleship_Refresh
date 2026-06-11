@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, Optional, Any, Generator
 from Ship import Direction
 from Logger import get_logger
 from GameRules import Output
+import AI
+import Board
+import Fleet
 
 if TYPE_CHECKING:
-    import Board
-    import Fleet
     import Ship
     import Tile
     import UI
@@ -25,6 +26,20 @@ class Difficulty(StrEnum):
 
 
 logger = get_logger(__name__)
+
+
+def create_player(name: str, difficulty: Difficulty, width: int, height: int, fleet_comp: dict[str, int]):
+    ai_brain = None
+    if difficulty == Difficulty.EASY:
+        ai_brain = AI.Random()
+    elif difficulty == Difficulty.MEDIUM:
+        ai_brain = AI.HuntAndTargetAIAdv()
+    # elif p.difficulty == Difficulty.HARD:
+    #     p._ai_brain = AI.ProbabilityAI()
+
+    return Player(
+        name, difficulty, Board.Board(width=width, height=height), Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain
+    )
 
 
 @dataclass()
@@ -125,7 +140,7 @@ class Player:
                     if target_tile.contains:
                         overlap_detection = True
                         break
-                
+
                 if overlap_detection:
                     continue
 

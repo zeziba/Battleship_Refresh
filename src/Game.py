@@ -7,7 +7,6 @@ import GameRules
 import Player
 import Ship
 import UI
-import AI
 
 TESTING = False
 logger = get_logger(__name__)
@@ -43,6 +42,7 @@ class Game:
     def __post_init__(self):
         logger.debug("Post-init")
         self.set_up()
+        logger.debug(f"Set up finished there are {len(self.players_dict)} players")
         self.UI = UI.UI()
 
     @property
@@ -62,27 +62,6 @@ class Game:
     def stopped(self) -> bool:
         logger.info("Checking if game has stopped")
         return self.state == GameRules.State.STOPPED
-
-    def _set_up(self) -> None:
-        logger.info("Setting up game board")
-        for index, difficulty in enumerate(self.players):
-            logger.debug(f"Attempting to init - {index}\t{difficulty}")
-            name = f"p_{difficulty}_{index}"
-            ai_brain = None
-            if difficulty == Difficulty.EASY:
-                ai_brain = AI.Random()
-            elif difficulty == Difficulty.MEDIUM:
-                ai_brain = AI.HuntAndTargetAIAdv()
-            # elif p.difficulty == Difficulty.HARD:
-            #     p._ai_brain = AI.ProbabilityAI()
-            self.players_dict[name] = Player.Player(
-                name,
-                difficulty,
-                Board.Board(width=self.config.board_width, height=self.config.board_height),
-                Fleet.GeneralFleet(self.config.fleet_composition),
-                ai_brain
-            )
-            logger.debug(f"Finished init of {name} as {difficulty}")
 
     def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:
         """
@@ -129,7 +108,6 @@ class Game:
 
     def set_up(self) -> None:
         logger.info("Starting set-up")
-        self._set_up()
         for p in self.iter_players:
             logger.info(f"\tPlayer {p}")
             logger.info(f"Player is {p.difficulty} - starting fleet generation")
@@ -260,8 +238,3 @@ class Game:
 
         if current:
             self.UI.output(GameRules.Output.WON_GAME.format(current.name))
-
-
-if __name__ == "__main__":
-    game = Game((Difficulty.MEDIUM, Difficulty.MEDIUM))
-    game.take_turns()
