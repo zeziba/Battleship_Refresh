@@ -16,16 +16,12 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: Optional[int]
-    width: Optional[int]
+    height: int = field(default=getattr(GameRules, "SIZE", 10))
+    width: int = field(default=getattr(GameRules, "SIZE", 10))
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
     def __post_init__(self):
         logger.debug("Post Init of board")
-        if not self.height:
-            self.height = getattr(GameRules, "SIZE", 10)
-        if not self.width:
-            self.height = getattr(GameRules, "SIZE", 10)
         self._generate_board()
         logger.debug(f"\tGenerated board has {len(self._tiles)} Tile.Tile(s)")
 
@@ -64,7 +60,10 @@ class Board:
         logger.debug("Generating Board Tile(s)")
         import Tile
 
-        self._tiles = [Tile.Tile(None, False) for _ in range(self.size)]
+        if self.height and self.width:
+            self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
+        else:
+            self._tiles = [Tile.Tile(None, False) for _ in range(getattr(GameRules, "SIZE", 10))]
 
     @property
     def all_ships_sunk(self):
