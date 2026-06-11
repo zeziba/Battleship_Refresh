@@ -7,7 +7,6 @@ import GameRules
 import Player
 import Ship
 import UI
-import AI
 
 TESTING = False
 logger = get_logger(__name__)
@@ -68,20 +67,7 @@ class Game:
         for index, difficulty in enumerate(self.players):
             logger.debug(f"Attempting to init - {index}\t{difficulty}")
             name = f"p_{difficulty}_{index}"
-            ai_brain = None
-            if difficulty == Difficulty.EASY:
-                ai_brain = AI.Random()
-            elif difficulty == Difficulty.MEDIUM:
-                ai_brain = AI.HuntAndTargetAIAdv()
-            # elif p.difficulty == Difficulty.HARD:
-            #     p._ai_brain = AI.ProbabilityAI()
-            self.players_dict[name] = Player.Player(
-                name,
-                difficulty,
-                Board.Board(width=self.config.board_width, height=self.config.board_height),
-                Fleet.GeneralFleet(self.config.fleet_composition),
-                ai_brain
-            )
+            self.players_dict[name] = Player.create_player(name, difficulty, self.config.board_width, self.config.board_height, self.config.fleet_composition)
             logger.debug(f"Finished init of {name} as {difficulty}")
 
     def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:

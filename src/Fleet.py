@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
+from typing import Optional
 
 from Logger import get_logger
 
@@ -18,7 +19,8 @@ class FleetType(StrEnum):
 
 @dataclass
 class GeneralFleet:
-    _fleet: dict[FleetType, Ship] = field(default_factory=dict)
+    _fleet: Optional[dict[FleetType, Ship]] = None
+    fleet_comp: dict[str, int] = field(default_factory=dict)
 
     def __post_init__(self):
         logger.debug("Post Init for GeneralFleet")
@@ -30,7 +32,7 @@ class GeneralFleet:
             FleetType.DESTROYER: "DESTROYER"
         }
 
-        if self._fleet:
+        if self.fleet_comp:
             temp = dict()
             for enum_type, rule_name in rule_map.items():
                 ship_length = GameRules.FLEET[rule_name]
@@ -41,6 +43,7 @@ class GeneralFleet:
             return
         
 
+        self._fleet = dict()
         for enum_type, rule_name in rule_map.items():
             ship_length = GameRules.FLEET[rule_name]
             self._fleet[enum_type] = Ship(name=rule_name, length=ship_length)
@@ -48,6 +51,8 @@ class GeneralFleet:
     @property
     def ships(self) -> list[Ship]:
         logger.debug("Getting GeneralFleet._fleet as list(Ship)")
+        if not self._fleet:
+            return list()
         return list(self._fleet.values())
     
     @property
