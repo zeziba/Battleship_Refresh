@@ -67,26 +67,41 @@ class Game:
             )
             logger.debug(f"Finished init of {name} as {difficulty}")
 
-    def _check(
-        self, x: int, y: int, h_v: str, player: Player.Player, ship: Ship.Ship
-    ) -> bool:
+    def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:
         """
-        Checks if the given (x, y, h_v, p, ship) are able to place at the given
-        location and directionality
+        Validates whether a ship can be placed at the given coordinates and orientation.
+        
+        :Args:
+            :p: The Player object placing the ship.
+            :ship: The Ship object being placed.
+            :coords: A tuple of (x, y) integers representing the starting position.
+            :h_v: A string ('h' or 'v') representing the orientation.
+            
+        :Returns:
+            bool: True if the placement is valid, False otherwise.
         """
-        logger.info(f"Checking {player.name} at ({x}, {y}) with {h_v}")
+        x, y = coords
+        h_v = h_v.strip().lower()
+        logger.debug(f"Checking {p.name} at ({x}, {y}) with {h_v}")
+        if h_v not in ("h", "v") or len(h_v) != 1:
+            self.UI.output(GameRules.Output.DIR_INVALID)
+            return False
+        directionality = Ship.Direction.HORIZONTAL if h_v == 'h' else Ship.Direction.VERTICAL
         if not GameRules.check_xy(x, y):
             return False
 
-        if h_v not in ("h", "v") or len(h_v) != 1:
+        try:
+            projected_coords = list(Ship.Ship.possible_places(x, y, ship.length, directionality))
+        except Exception as ex:
+            self.UI.output(GameRules.Output.FAILED_PLACE.format(ship.name, x, y, directionality))
+            logger.warning(ex)
             return False
-
-        direction = Ship.Direction.HORIZONTAL if h_v == "h" else Ship.Direction.VERTICAL
-
-        new_ship = Ship.Ship.possible_places(x, y, ship.length, direction)
-        for px, py in new_ship:
-            if any(s.contains(px, py) for s in player.get_ships):
-                return False
+        
+        for px, py in projected_coords:
+            for existing_ship in p.get_ships:
+                if existing_ship.is_placed and existing_ship.contains(px, py):
+                    self.UI.output(GameRules.Output.OVERLAP.format(x, y, existing_ship.name))
+                    return False
 
         return True
 
@@ -123,7 +138,7 @@ class Game:
                         else:
                             x = random.randint(0, GameRules.SIZE - 1)
                             y = random.randint(0, GameRules.SIZE - 1 - ship.length)
-                        if self._check(x, y, h_v, p, ship):
+                        if self._check((x, y), h_v, p, ship):
                             ship.directionality = (
                                 Ship.Direction.HORIZONTAL
                                 if h_v == "h"
@@ -164,7 +179,7 @@ class Game:
                 x = int(x)
                 y = int(y)
                 h_v = self.UI.get_selection(GameRules.Output.DIR_ENTER)
-                if not self._check(x, y, h_v, p, ship):
+                if not self._check((x, y), h_v, p, ship):
                     logger.debug("Passed check, failed placing")
                     self.UI.output(
                         GameRules.Output.FAILED_PLACE.format(

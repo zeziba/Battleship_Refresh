@@ -60,6 +60,7 @@ FLEET = {
 class Output(StrEnum):
     COORD_ENTER = "Please enter in your coords: x y\n\t"
     DIR_ENTER = "Please enter in your directionality: h -> horizontal or v -> vertical\n\t"
+    DIR_INVALID = "Invalid orientation choice! Please type 'h' for horizontal or 'v' for vertical."
     START_LOCATION = f"Please enter in the starting location of the {Colors.BLUE}{{}}{Colors.END}: x y\n\t"
     PLACE = f"Placing {Colors.GREEN}{{}}{Colors.END}"
     FAILED_PLACE = f"{Colors.RED}Failed{Colors.END} to place {{}} at ({{}}, {{}}) with directionality {{}} as not a valid location."
@@ -75,6 +76,7 @@ class Output(StrEnum):
     STRUCK_AGAIN = f"Location has {Colors.RED}already been struck once{Colors.END} before try again."
     AI_SHOT_TAKEN = f"{Colors.GREEN}AI{Colors.END} fired at {Colors.LIGHT_WHITE}({{}}, {{}}){Colors.END}"
     SUNK_SHIP = f"{Colors.LIGHT_PURPLE}{{}}{Colors.END} has been sunk!"
+    OVERLAP = f"{Colors.RED}Overlap Detected!{Colors.END} Position ({{}}, {{}}) is already occupied by {{}}"
 
 
 class State(Enum):
