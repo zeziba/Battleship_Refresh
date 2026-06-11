@@ -6,16 +6,16 @@ LOG_FILE = "battleship.log"
 
 
 MODULE_LOG_CONFIG = {
-    "Game": True,
-    "GameRules.py": True,
-    "Player": True,
-    "AI": True,
-    "Fleet": True,
-    "Ship": True,
-    "Board": False,
-    "Tile": True,
-    "UI": True,
-    "__main__": True,
+    "Game":             True,
+    "GameRules.py":     False,
+    "Player":           False,
+    "AI":               False,
+    "Fleet":            False,
+    "Ship":             False,
+    "Board":            False,
+    "Tile":             False,
+    "UI":               False,
+    "__main__":         True,
 }
 
 

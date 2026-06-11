@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
 import random
-from typing import TYPE_CHECKING, Optional, Any, Generator
+from typing import TYPE_CHECKING, Callable, Optional, Any, Generator
 
 from Ship import Direction
 from Logger import get_logger
@@ -50,6 +50,8 @@ class Player:
     _fleet: Fleet.GeneralFleet
     _ai_brain: Optional[BattleShipAI] = field(default=None)
 
+    _get_input_hook: Optional[Callable[[str], Optional[tuple[int, int]]]] = field(default=None)
+
     @property
     def name(self):
         logger.debug("Getting name")
@@ -80,6 +82,9 @@ class Player:
         logger.debug(f"Getting Generator for {self.name}'s fleet")
         yield from self._fleet.ships
 
+    def set_input_hook(self, func: Callable[[str], Optional[tuple[int, int]]]):
+        self._get_input_hook = func
+
     def take_at_self_shot(self, x: int, y: int) -> Board.Tile.Tile:
         logger.debug(f"{self.name} is taking a shot at self")
         tile = self._board.get(x, y)
@@ -88,7 +93,7 @@ class Player:
         self._fleet.hit(x, y)
         return tile
 
-    def is_already_targeted(self, x, y) -> bool:
+    def is_already_targeted(self, x: int, y: int) -> bool:
         logger.debug(f"Checking if ({x},{y}) in {self.name}'s board has been targeted")
         return self.board.get(x, y).hit
 
@@ -99,22 +104,23 @@ class Player:
                 self._ai_brain.ships_left.pop(tile.has.name, None)
             self._ai_brain.register_hit(x, y, tile.has.is_sunk)
 
-    def choose_target(self, UI: UI.UI) -> tuple[int, int]:
+    def choose_target(self) -> tuple[int, int]:
         logger.debug(f"Starting target acquisition for {self.name}")
-        if self._ai_brain and self.is_ai:
-            x, y = self._ai_brain.get_shot()
-            UI.output(Output.AI_SHOT_TAKEN.format(x, y))
-        else:
-            while True:
-                raw_coords = UI.get_selection(Output.COORD_ENTER_GENERIC)
-                parsed_coord = UI.parse_coord(raw_coords)
-                if parsed_coord is None:
-                    logger.debug(f"Failed to enter proper coords with {parsed_coord}")
-                    UI.output(Output.WRONG_INPUT.format(Output.EXAMPLE_1))
-                    continue
-                else:
-                    x, y = parsed_coord
-        return x, y
+        if self.is_ai and self._ai_brain:
+            ai_target = self._ai_brain.get_shot()
+            if ai_target:
+                return ai_target
+            
+            return random.randint(0, self._board.width - 1), random.randint(0, self._board.height - 1)
+        
+        if not self._get_input_hook:
+            raise  RuntimeError(f"Polymorphism Error: Human Player '{self.name}' UI input hook")
+        
+        while True:
+            prompt = Output.COORD_ENTER_GENERIC
+            coords = self._get_input_hook(prompt)
+            if coords is not None:
+                return coords
 
     def auto_ship_placement(self):
         logger.debug(f"Starting auto ship placement for {self.name}")

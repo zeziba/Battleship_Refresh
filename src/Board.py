@@ -71,21 +71,3 @@ class Board:
         logger.debug("Generating output array")
         score = lambda hit, contains: 1 if (not hit and contains) else 0
         return tuple(score(tile.hit, tile.contains) for tile in self.tiles)
-
-    def output_readable(self, hidden: bool = True) -> str:
-        logger.debug("Geneerating output that is readable")
-        nl = "\n"
-        if hidden:
-            return "".join(
-                [
-                    f"{HITTILE if tile.hit else EMPTYTILE}{nl if (index + 1) % self.size == 0 else ''}"
-                    for index, tile in enumerate(self.tiles)
-                ]
-            )
-        else:
-            return "".join(
-                [
-                    f"{HITTILE if tile.contains else EMPTYTILE}{nl if (index + 1) % self.size == 0 else ''}"
-                    for index, tile in enumerate(self.tiles)
-                ]
-            )
