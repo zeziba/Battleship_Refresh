@@ -1,13 +1,12 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Callable
 from dataclasses import dataclass, field
-from enum import Enum, auto, StrEnum
-from typing import Any, Generator
-from Logger import get_logger
-from Ship import Direction
-from GameRules import Output
+from enum import auto, StrEnum
+import random
+from typing import TYPE_CHECKING, Iterator, Optional, Any, Generator
 
-logger = get_logger(__name__)
+from Ship import Direction
+from Logger import get_logger
+from GameRules import Output
 
 if TYPE_CHECKING:
     import Board
@@ -25,13 +24,16 @@ class Difficulty(StrEnum):
     HARD = auto()
 
 
+logger = get_logger(__name__)
+
+
 @dataclass()
 class Player:
     _name: str
     _difficulty: Difficulty
     _board: Board.Board
     _fleet: Fleet.GeneralFleet
-    _ai_brain: BattleShipAI | None = None
+    _ai_brain: Optional[BattleShipAI] = field(default=None)
 
     @property
     def name(self):
@@ -48,21 +50,32 @@ class Player:
     @property
     def board(self) -> Board.Board:
         return self._board
-    
+
     @property
     def is_ai(self) -> bool:
         return self.difficulty != Difficulty.PLAYER
 
     @property
     def get_ships(self) -> Generator[Ship.Ship, Any, None]:
-        for ship in self.fleet.ships:
-            yield ship
+        yield from self._fleet.ships
 
-    def take_at_self_shot(self, x: int, y: int) -> tuple[bool, Board.Tile.Tile]:
-        fleet, tile = self.fleet.hit(x, y), self.board.get(x, y)
+    def take_at_self_shot(self, x: int, y: int) -> tuple[Fleet.GeneralFleet, Board.Tile.Tile]:
+        tile = self._board.get(x, y)
         tile.hit = True
-        return fleet, tile
-    
+
+        self._fleet.hit(x, y)
+        return self._fleet, tile
+
+    def is_already_targeted(self, x, y) -> bool:
+        return self.board.get(x, y).hit
+
+    def process_shot_result(self, x: int, y: int, tile: Tile.Tile):
+        if self._ai_brain and self.is_ai and tile.has:
+            if tile.has.is_sunk:
+                self._ai_brain.ships_left.pop(tile.has.name, None)
+            self._ai_brain.register_hit(x, y, tile.has.is_sunk)
+            self.take_at_self_shot(x, y)
+
     def choose_target(self, UI: UI.UI) -> tuple[int, int]:
         if self._ai_brain and self.is_ai:
             x, y = self._ai_brain.get_shot()
@@ -78,31 +91,35 @@ class Player:
                 else:
                     x, y = parsed_coord
         return x, y
-    
-    def is_alread_targeted(self, x, y) -> bool:
-        return self.board.get(x, y).hit
 
-    def process_shot(self, x: int, y: int, tile: Tile.Tile):
-        if self._ai_brain and self.difficulty and self.is_ai and tile.has:
-            if tile.has.is_sunk:
-                self._ai_brain.ships_left.pop(tile.has.name, None)
-            self._ai_brain.register_hit(x, y, tile.has.is_sunk)
-
-    def auto_ship_placement(self, board_size: int):
-        import random
-
-        for ship in self.fleet.ships:
+    def auto_ship_placement(self):
+        for ship in self._fleet.ships:
             logger.debug(f"\tAttemtpting to place {ship.name}")
-            while True:
-                h_v = random.choice(["h", "v"])
-                if "h" == h_v:
-                    x = random.randint(0, board_size - 1 - ship.length)
-                    y = random.randint(0, board_size - 1)
+            placed = False
+
+            while not placed:
+                orientation = random.choice([Direction.HORIZONTAL, Direction.VERTICAL])
+
+                if orientation == Direction.HORIZONTAL:
+                    x = random.randint(0, self._board.width - ship.length)
+                    y = random.randint(0, self._board.height - 1)
                 else:
-                    x = random.randint(0, board_size - 1)
-                    y = random.randint(0, board_size - 1 - ship.length)
-                    ship.directionality = Direction.HORIZONTAL if h_v == "h" else Direction.VERTICAL
-                    ship.place_ship(x, y, self.board)
-                    logger.debug(f"\tSucceeded to place {ship.name} at ({x}, {y}, {h_v})")
-                    break
-                logger.debug(f"\tFailed to place {ship.name} at ({x}, {y}, {h_v})")
+                    x = random.randint(0, self._board.width - 1)
+                    y = random.randint(0, self._board.height - ship.length)
+
+                projected_position = list(ship.possible_places(x, y, ship.length, orientation))
+
+                overlap_detection = False
+                for px, py in projected_position:
+                    target_tile = self._board.get(px, py)
+                    if target_tile.contains:
+                        overlap_detection = True
+                        break
+                
+                if overlap_detection:
+                    continue
+
+                ship.directionality = orientation
+                ship.place_ship(x, y, self._board)
+                placed = True
+                logger.debug(f"\tSuccessfully placed {ship.name} at ({x}, {y})")
