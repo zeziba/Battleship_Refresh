@@ -14,7 +14,6 @@ import Fleet
 if TYPE_CHECKING:
     import Ship
     import Tile
-    import UI
     from AI import BattleShipAI
 
 

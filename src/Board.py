@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 from Logger import get_logger
 
 import GameRules
@@ -16,8 +16,8 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = GameRules.SIZE
-    width: int = GameRules.SIZE
+    height: int = field(default=getattr(GameRules, "SIZE", 10))
+    width: int = field(default=getattr(GameRules, "SIZE", 10))
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
     def __post_init__(self):
@@ -28,7 +28,9 @@ class Board:
     @property
     def size(self):
         logger.debug("Getting size property")
-        return self.height * self.width
+        if self.height and self.width:
+            return self.height * self.width
+        return 0
 
     @property
     def tiles(self) -> tuple[Tile.Tile, ...]:
@@ -37,9 +39,11 @@ class Board:
 
     def _convert_to_1d_index(self, x: int, y: int):
         logger.debug("Converting 2d coords to 1d index")
-        if not (0 <= x < self.width) or not (0 <= y < self.height):
-            raise IndexError(f"Coordinates ({x}, {y}) track outside of board")
-        return x + (y * self.width)
+        if self.width and self.height:
+            if not (0 <= x < self.width) or not (0 <= y < self.height):
+                raise IndexError(f"Coordinates ({x}, {y}) track outside of board")
+            return x + (y * self.width)
+        raise ValueError("Width or Height not set")
 
     def get(self, px, py) -> Tile.Tile:
         logger.debug(f"Getting Board.get({px}, {py}) Tile")
@@ -56,7 +60,10 @@ class Board:
         logger.debug("Generating Board Tile(s)")
         import Tile
 
-        self._tiles = [Tile.Tile(None, False) for _ in range(self.size)]
+        if self.height and self.width:
+            self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
+        else:
+            self._tiles = [Tile.Tile(None, False) for _ in range(getattr(GameRules, "SIZE", 10))]
 
     @property
     def all_ships_sunk(self):
