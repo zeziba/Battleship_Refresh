@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from Logger import get_logger
 
-import Board
-import Fleet
 import GameRules
 import Player
 import Ship
@@ -38,12 +36,12 @@ class Game:
     players_dict: dict[str, Player.Player] = field(default_factory=dict)
     state: GameRules.State = field(default=GameRules.State.STOPPED)
     config: GameConfig = field(default_factory=GameConfig)
+    _UI: UI.UI = field(default_factory=UI.UI)
 
     def __post_init__(self):
         logger.debug("Post-init")
         self.set_up()
         logger.debug(f"Set up finished there are {len(self.players_dict)} players")
-        self.UI = UI.UI()
 
     @property
     def iter_players(self):
@@ -80,7 +78,7 @@ class Game:
         h_v = h_v.strip().lower()
         logger.debug(f"Checking {p.name} at ({x}, {y}) with {h_v}")
         if h_v not in ("h", "v") or len(h_v) != 1:
-            self.UI.output(GameRules.Output.DIR_INVALID)
+            self._UI.output(GameRules.Output.DIR_INVALID)
             return False
         directionality = Ship.Direction.HORIZONTAL if h_v == "h" else Ship.Direction.VERTICAL
         if not GameRules.check_xy(x, y):
@@ -89,14 +87,14 @@ class Game:
         try:
             projected_coords = list(Ship.Ship.possible_places(x, y, ship.length, directionality))
         except Exception as ex:
-            self.UI.output(GameRules.Output.FAILED_PLACE.format(ship.name, x, y, directionality))
+            self._UI.output(GameRules.Output.FAILED_PLACE.format(ship.name, x, y, directionality))
             logger.warning(ex)
             return False
 
         for px, py in projected_coords:
             for existing_ship in p.get_ships:
                 if existing_ship.is_placed and existing_ship.contains(px, py):
-                    self.UI.output(GameRules.Output.OVERLAP.format(x, y, existing_ship.name))
+                    self._UI.output(GameRules.Output.OVERLAP.format(x, y, existing_ship.name))
                     return False
 
         return True
@@ -119,22 +117,30 @@ class Game:
                 p.auto_ship_placement()
                 continue
             # Is player
+            def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
+                raw_coords = self._UI.get_selection(prompt)
+                parsed_coord = self._UI.parse_coord(raw_coords)
+                if parsed_coord is None:
+                    logger.debug(f"Failed to enter proper coords with {parsed_coord}")
+                    self._UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
+                return parsed_coord
+            p.set_input_hook(get_user_coord_input)
             for ship in p.get_ships:
                 valid_placement = False
                 logger.debug(f"\tAttempting to place Ship: {ship.name}")
                 while not valid_placement:
-                    self.UI.output(GameRules.Output.PLACE.format(ship.name))
-                    raw_coords = self.UI.get_selection(GameRules.Output.COORD_ENTER_GENERIC)
-                    parsed_coord = self.UI.parse_coord(raw_coords)
+                    self._UI.output(GameRules.Output.PLACE.format(ship.name))
+                    raw_coords = self._UI.get_selection(GameRules.Output.COORD_ENTER_GENERIC)
+                    parsed_coord = self._UI.parse_coord(raw_coords)
                     if parsed_coord is None:
-                        self.UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
-                        self.UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
+                        self._UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
+                        self._UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
                         continue
                     x, y = parsed_coord
                     if not GameRules.check_xy(x, y):
-                        self.UI.output(GameRules.Output.OUTSIDE_BOARD.format(x, y))
+                        self._UI.output(GameRules.Output.OUTSIDE_BOARD.format(x, y))
                         continue
-                    h_v = self.UI.get_selection(GameRules.Output.DIR_ENTER)
+                    h_v = self._UI.get_selection(GameRules.Output.DIR_ENTER)
                     valid_placement = self._check((x, y), h_v, p, ship)
 
                     if valid_placement:
@@ -158,7 +164,7 @@ class Game:
     def output_player(self, player: Player.Player, hidden: bool = True):
         logger.info(f"Is {'' if hidden else 'not'} outputing to screen")
         # self.UI.output(player.board.output_readable(hidden=hidden))
-        self.UI.print_board(player.board, hidden)
+        self._UI.print_board(player.board, hidden)
 
     @property
     def _get_turn(self):
@@ -187,12 +193,12 @@ class Game:
     def _get_valid_shot(self, attacker: Player.Player, defender: Player.Player):
         logger.debug("Attemping to get valid shot")
         while True:
-            self.UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
-            x, y = attacker.choose_target(self.UI)
+            self._UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
+            x, y = attacker.choose_target()
 
             if defender.is_already_targeted(x, y):
                 logger.debug("\tLocation already selected")
-                self.UI.output(GameRules.Output.TRY_AGAIN)
+                self._UI.output(GameRules.Output.TRY_AGAIN)
                 continue
 
             return x, y
@@ -203,31 +209,37 @@ class Game:
         Meaning its the other players turn other than the given player.
         """
         logger.info(f"{attacker.name} is attacking {defender.name}.")
-        x, y = self._get_valid_shot(attacker, defender)
         while True:
-            tile = defender.take_at_self_shot(x, y)
-            attacker.process_shot_result(x, y, tile)
-            if tile.has:
-                if tile.has.is_sunk:
-                    self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
-                else:
-                    self.UI.output(GameRules.Output.SHOT_AT.format(x, y, tile.has.name))
-            else:
-                self.UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
-            self.output_player(defender)
+            x, y = attacker.choose_target()
 
+            if defender.is_already_targeted(x, y):
+                self._UI.output(GameRules.Output.TRY_AGAIN)
+                continue
             break
+
+        tile = defender.take_at_self_shot(x, y)
+
+        if tile.has:
+            if tile.has.is_sunk:
+                self._UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
+            else:
+                self._UI.output(GameRules.Output.SHOT_AT.format(x, y, tile.has.name))
+        else:
+            self._UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
+            
+        self.output_player(defender)
+        attacker.process_shot_result(x, y, tile)
 
     def take_turns(self):
         logger.info("Taking a turn")
-        self.UI.clear_screen()
+        self._UI.clear_screen()
         current: Player.Player | None = None
 
         for turn, attacker, defender in self._get_turn:
             if turn % 3 == 0:
-                self.UI.clear_screen()
+                self._UI.clear_screen()
             logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
-            self.UI.output(GameRules.Output.CURRENT_TURN.format(turn, defender.name))
+            self._UI.output(GameRules.Output.CURRENT_TURN.format(turn, defender.name))
             self._take_turn(attacker, defender)
             current = attacker
             # self.UI.pause(self.UI.delay)
@@ -237,4 +249,4 @@ class Game:
                 break
 
         if current:
-            self.UI.output(GameRules.Output.WON_GAME.format(current.name))
+            self._UI.output(GameRules.Output.WON_GAME.format(current.name))

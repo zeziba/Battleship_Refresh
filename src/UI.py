@@ -62,7 +62,7 @@ class UI:
                 x = ord(letter_part) - ord("a")
                 y = int(digit_part) - 1
 
-                return x, y - 1
+                return x, y
 
         return None
 
