@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Iterator, Optional, Any, Generator
 
 from Ship import Direction
 from Logger import get_logger
-from GameRules import Output
+from GameRules import Output, Colors
 
 if TYPE_CHECKING:
     import Board
@@ -65,25 +65,24 @@ class Player:
         logger.debug(f"Getting Generator for {self.name}'s fleet")
         yield from self._fleet.ships
 
-    def take_at_self_shot(self, x: int, y: int) -> tuple[Fleet.GeneralFleet, Board.Tile.Tile]:
+    def take_at_self_shot(self, x: int, y: int) -> Board.Tile.Tile:
         logger.debug(f"{self.name} is taking a shot at self")
         tile = self._board.get(x, y)
         tile.hit = True
 
         self._fleet.hit(x, y)
-        return self._fleet, tile
+        return tile
 
     def is_already_targeted(self, x, y) -> bool:
         logger.debug(f"Checking if ({x},{y}) in {self.name}'s board has been targeted")
         return self.board.get(x, y).hit
 
     def process_shot_result(self, x: int, y: int, tile: Tile.Tile):
-        logger.debug(f"Processing shot at ({x}, {y}) on {self.name}'s tile")
         if self._ai_brain and self.is_ai and tile.has:
+            logger.debug(f"Processing shot at ({x}, {y}) on {self.name}'s tile")
             if tile.has.is_sunk:
                 self._ai_brain.ships_left.pop(tile.has.name, None)
             self._ai_brain.register_hit(x, y, tile.has.is_sunk)
-            self.take_at_self_shot(x, y)
 
     def choose_target(self, UI: UI.UI) -> tuple[int, int]:
         logger.debug(f"Starting target acquisition for {self.name}")

@@ -68,11 +68,19 @@ class Game:
         for index, difficulty in enumerate(self.players):
             logger.debug(f"Attempting to init - {index}\t{difficulty}")
             name = f"p_{difficulty}_{index}"
+            ai_brain = None
+            if difficulty == Difficulty.EASY:
+                ai_brain = AI.Random()
+            elif difficulty == Difficulty.MEDIUM:
+                ai_brain = AI.HuntAndTargetAIAdv()
+            # elif p.difficulty == Difficulty.HARD:
+            #     p._ai_brain = AI.ProbabilityAI()
             self.players_dict[name] = Player.Player(
                 name,
                 difficulty,
                 Board.Board(width=self.config.board_width, height=self.config.board_height),
                 Fleet.GeneralFleet(self.config.fleet_composition),
+                ai_brain
             )
             logger.debug(f"Finished init of {name} as {difficulty}")
 
@@ -130,14 +138,6 @@ class Game:
                 self._testing_ship_placer(p)
                 continue
             if p.is_ai:
-
-                if p.difficulty == Difficulty.EASY:
-                    p._ai_brain = AI.Random()
-                elif p.difficulty == Difficulty.MEDIUM:
-                    p._ai_brain = AI.HuntAndTargetAIAdv()
-                # elif p.difficulty == Difficulty.HARD:
-                #     p._ai_brain = AI.ProbabilityAI()
-
                 p.auto_ship_placement()
                 continue
             # Is player
@@ -227,7 +227,8 @@ class Game:
         logger.info(f"{attacker.name} is attacking {defender.name}.")
         x, y = self._get_valid_shot(attacker, defender)
         while True:
-            _, tile = defender.take_at_self_shot(x, y)
+            tile = defender.take_at_self_shot(x, y)
+            attacker.process_shot_result(x, y, tile)
             if tile.has:
                 if tile.has.is_sunk:
                     self.UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
@@ -237,8 +238,6 @@ class Game:
                 self.UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
             self.output_player(defender)
 
-            if hasattr(attacker, "process_shot"):
-                attacker.process_shot_result(x, y, tile)
             break
 
     def take_turns(self):
