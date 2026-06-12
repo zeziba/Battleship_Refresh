@@ -2,12 +2,12 @@ from dataclasses import dataclass, field
 from enum import auto, StrEnum
 from typing import Optional
 
-from Logger import get_logger
+from .Logger import get_logger
 
 logger = get_logger(__name__)
 
-import GameRules
-from Ship import Ship
+from . import GameRules
+from .Ship import Ship
 
 class FleetType(StrEnum):
     CARRIER = auto()

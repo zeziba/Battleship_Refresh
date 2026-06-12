@@ -1,18 +1,19 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
-from Logger import get_logger
+import os
+import time
+
+from .Logger import get_logger
 
 logger = get_logger(__name__)
 
 if TYPE_CHECKING:
-    import Tile
-    import Board
+    from . import Tile
+    from . import Board
 
-import os
-import time
 
-from GameRules import Output, check_xy
+from .GameRules import Output, check_xy
 
 
 @dataclass()

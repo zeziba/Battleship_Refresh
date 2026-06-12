@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from Logger import get_logger
 
-import GameRules
-import Player
-import Ship
-import UI
+from .Logger import get_logger
+
+from . import GameRules
+from . import Player
+from . import Ship
+from . import UI
 
 TESTING = False
 logger = get_logger(__name__)

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from Ship import Ship
+    from .Ship import Ship
 
 
 @dataclass
@@ -45,7 +45,7 @@ class Tile:
         self._contains = value
 
     def get_rendered_logo(self, hidden: bool = True) -> str:
-        from GameRules import Colors, HitTile, MissTile, EmptyTile
+        from .GameRules import Colors, HitTile, MissTile, EmptyTile
         if self._hit and self._contains:
             if self._contains.is_sunk:
                 return f"{Colors.LIGHT_RED}{self._contains.name[0]} {Colors.END}"

@@ -4,17 +4,17 @@ from enum import auto, StrEnum
 import random
 from typing import TYPE_CHECKING, Callable, Optional, Any, Generator
 
-from Ship import Direction
-from Logger import get_logger
-from GameRules import Output
-import AI
-import Board
-import Fleet
+from .Ship import Direction
+from .Logger import get_logger
+from .GameRules import Output
+from . import AI
+from . import Board
+from . import Fleet
 
 if TYPE_CHECKING:
-    import Ship
-    import Tile
-    from AI import BattleShipAI
+    from . import Ship
+    from . import Tile
+    from .AI import BattleShipAI
 
 
 class Difficulty(StrEnum):
