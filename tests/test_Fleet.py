@@ -76,22 +76,14 @@ class TestGenerateFleet:
                 for xy in range(src.Fleet.GameRules.SIZE - 1):
                     v = src.Fleet.GameRules.SIZE - ship.length
                     x = v if direction is src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    y = (
-                        v
-                        if direction is not src.Fleet.Ship.Direction.HORIZONTAL
-                        else xy
-                    )
+                    y = v if direction is not src.Fleet.Ship.Direction.HORIZONTAL else xy
                     assert (
                         fleet.can_place(ship, x, y) is False
                     ), f"{ship}@(X: {x}, Y: {y}):{ship.directionality} should have failed"
                 for xy in range(src.Fleet.GameRules.SIZE - 1):
                     v = -1
                     x = v if direction is src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    y = (
-                        v
-                        if direction is not src.Fleet.Ship.Direction.HORIZONTAL
-                        else xy
-                    )
+                    y = v if direction is not src.Fleet.Ship.Direction.HORIZONTAL else xy
                     assert (
                         fleet.can_place(ship, x, y) is False
                     ), f"{ship}@(X: {x}, Y: {y}):{ship.directionality} should have failed"
@@ -101,11 +93,7 @@ class TestGenerateFleet:
             for key, ship in fleet.fleet.items():
                 ship.directionality = direction
                 for xy in range(src.Fleet.GameRules.SIZE - 1):
-                    x = (
-                        xy
-                        if direction is not src.Fleet.Ship.Direction.HORIZONTAL
-                        else 0
-                    )
+                    x = xy if direction is not src.Fleet.Ship.Direction.HORIZONTAL else 0
                     y = xy if direction is src.Fleet.Ship.Direction.HORIZONTAL else 0
                     assert (
                         fleet.can_place(ship, x, y) is True
@@ -117,6 +105,4 @@ class TestGenerateFleet:
         board.generate_board()
         fleet.fleet[ships[0]].place_ship(0, 0, board)
         for other in fleet.other_ships(fleet.fleet[ships[0]]):
-            assert (
-                fleet.can_place(other, 0, 0) is False
-            ), f"{other}@(X: 0, Y: 0) should have failed"
+            assert fleet.can_place(other, 0, 0) is False, f"{other}@(X: 0, Y: 0) should have failed"
