@@ -1,14 +1,14 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional
-from Logger import get_logger
+from typing import TYPE_CHECKING
 
-from src import config
+from .Logger import get_logger
 
-import GameRules
+from . import config as _config
+from . import GameRules
 
 if TYPE_CHECKING:
-    import Tile
+    from . import Tile
 
 logger = get_logger(__name__)
 
@@ -18,8 +18,8 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = field(default=config.board_width)
-    width: int = field(default=config.board_width)
+    height: int = field(default=_config.board_width)
+    width: int = field(default=_config.board_width)
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
     def __post_init__(self):
@@ -60,7 +60,7 @@ class Board:
 
     def _generate_board(self) -> None:
         logger.debug("Generating Board Tile(s)")
-        import Tile
+        from . import Tile
 
         self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from os import walk, path
+from os import path
 import random
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent

@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from enum import Enum, auto, unique
 
-from Logger import get_logger
+from .Logger import get_logger
 
 logger = get_logger(__name__)
 
-from Board import Board, GameRules
-from Tile import Tile
+from .Board import Board, GameRules
+from .Tile import Tile
 
 
 @unique

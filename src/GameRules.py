@@ -1,6 +1,6 @@
 from enum import Enum, auto, StrEnum
 
-from Logger import get_logger
+from .Logger import get_logger
 
 logger = get_logger(__name__)
 

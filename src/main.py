@@ -1,10 +1,11 @@
 import sys
 
-from Game import Game, GameConfig
-from Player import Difficulty, create_player
-import name_generator as Names
+from .Game import Game
+from .Player import Difficulty, create_player
+import src.name_generator as Names
+from src import config as _config
 
-from Logger import get_logger
+from .Logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,7 +14,7 @@ def run():
     print("Welcome to Battleship")
     logger.debug("Starting Game")
 
-    config = GameConfig()
+    config = _config
     names = Names.NameGenerator()
 
     p1_mode = Difficulty.MEDIUM

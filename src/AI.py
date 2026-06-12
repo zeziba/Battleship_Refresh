@@ -1,6 +1,7 @@
 import random
-import GameRules
 from abc import ABC, abstractmethod
+
+from . import GameRules
 
 
 class BattleShipAI(ABC):

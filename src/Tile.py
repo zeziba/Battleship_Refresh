@@ -45,7 +45,7 @@ class Tile:
         self._contains = value
 
     def get_rendered_logo(self, hidden: bool = True) -> str:
-        from GameRules import Colors, HitTile, MissTile, EmptyTile
+        from .GameRules import Colors, HitTile, MissTile, EmptyTile
         if self._hit and self._contains:
             if self._contains.is_sunk:
                 return f"{Colors.LIGHT_RED}{self._contains.name[0]} {Colors.END}"
