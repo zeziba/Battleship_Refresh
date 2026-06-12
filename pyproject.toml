@@ -7,7 +7,7 @@ name = "Battleship_revisited"
 version = "0.1.0"
 description = "A terminal-based Battleship game"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [
     { name = "Charles Engen", email = "owenengen@gmail.com" }
 ]
@@ -30,4 +30,4 @@ include = ["src"]
 
 [tool.black]
 line-length = 119
-target-version = ['py310']
+target-version = ['py311']
