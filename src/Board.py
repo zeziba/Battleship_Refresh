@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Optional
 from Logger import get_logger
 
+from src import config
+
 import GameRules
 
 if TYPE_CHECKING:
@@ -16,8 +18,8 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = field(default=getattr(GameRules, "SIZE", 10))
-    width: int = field(default=getattr(GameRules, "SIZE", 10))
+    height: int = field(default=config.board_width)
+    width: int = field(default=config.board_width)
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
     def __post_init__(self):
@@ -60,10 +62,7 @@ class Board:
         logger.debug("Generating Board Tile(s)")
         import Tile
 
-        if self.height and self.width:
-            self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
-        else:
-            self._tiles = [Tile.Tile(None, False) for _ in range(getattr(GameRules, "SIZE", 10))]
+        self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
 
     @property
     def all_ships_sunk(self):
