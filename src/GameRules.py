@@ -5,7 +5,7 @@ from .Logger import get_logger
 logger = get_logger(__name__)
 
 SIZE = 10
-ESC = '\033'
+ESC = "\033"
 
 
 class Colors(StrEnum):
@@ -57,6 +57,7 @@ FLEET = {
     "DESTROYER": 3,
 }
 
+
 class Output(StrEnum):
     COORD_ENTER = "Please enter in your coords: x y\n\t"
     COORD_ENTER_GENERIC = "Enter starting coordinate (e.g., A5 or 0,4): "
@@ -74,7 +75,9 @@ class Output(StrEnum):
     PRE_SHOT = f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}"
     SHOT_AT = f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} hit {Colors.LIGHT_CYAN}{{}}{Colors.END}"
     INVALID_COORD = "Coordinates are not valid, attempt again"
-    CURRENT_TURN = f"Currently turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted"
+    CURRENT_TURN = (
+        f"Currently turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted"
+    )
     WON_GAME = f"{Colors.GREEN}{{}}{Colors.END} has won the game!"
     STRUCK_AGAIN = f"Location has {Colors.RED}already been struck once{Colors.END} before try again."
     AI_SHOT_TAKEN = f"{Colors.GREEN}AI{Colors.END} fired at {Colors.LIGHT_WHITE}({{}}, {{}}){Colors.END}"

@@ -117,6 +117,7 @@ class Game:
             if p.is_ai:
                 p.auto_ship_placement()
                 continue
+
             # Is player
             def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
                 raw_coords = self._UI.get_selection(prompt)
@@ -125,6 +126,7 @@ class Game:
                     logger.debug(f"Failed to enter proper coords with {parsed_coord}")
                     self._UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
                 return parsed_coord
+
             p.set_input_hook(get_user_coord_input)
             for ship in p.get_ships:
                 valid_placement = False
@@ -227,7 +229,7 @@ class Game:
                 self._UI.output(GameRules.Output.SHOT_AT.format(x, y, tile.has.name))
         else:
             self._UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
-            
+
         self.output_player(defender)
         attacker.process_shot_result(x, y, tile)
 

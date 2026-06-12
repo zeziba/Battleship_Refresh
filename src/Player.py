@@ -109,12 +109,12 @@ class Player:
             ai_target = self._ai_brain.get_shot()
             if ai_target:
                 return ai_target
-            
+
             return random.randint(0, self._board.width - 1), random.randint(0, self._board.height - 1)
-        
+
         if not self._get_input_hook:
-            raise  RuntimeError(f"Polymorphism Error: Human Player '{self.name}' UI input hook")
-        
+            raise RuntimeError(f"Polymorphism Error: Human Player '{self.name}' UI input hook")
+
         while True:
             prompt = Output.COORD_ENTER_GENERIC
             coords = self._get_input_hook(prompt)
