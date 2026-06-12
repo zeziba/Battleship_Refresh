@@ -21,7 +21,7 @@ def game_players():
 
 def get_coord():
     size = src.Game.GameRules.SIZE
-    for i in range(size ** 2):
+    for i in range(size**2):
         yield i % size, i // size
 
 
@@ -72,7 +72,7 @@ class TestGame:
         g.set_up()
         for p in g.player:
             assert len(p.fleet.fleet) == len(src.Game.GameRules.FLEET)
-            assert len(p.board.tiles) == src.Game.GameRules.SIZE ** 2
+            assert len(p.board.tiles) == src.Game.GameRules.SIZE**2
         src.Game.TESTING = False
         # Just need to check if g.set_up still works if TESTING is disabled
         g.set_up()
@@ -94,9 +94,7 @@ class TestGame:
 
             inputs_coords = [f"{x} {y}" for x, y in xy()]
             inputs_dir = ["v" for _ in range(len(inputs_coords))]
-            inputs = [
-                sub_item for item in zip(inputs_coords, inputs_dir) for sub_item in item
-            ]
+            inputs = [sub_item for item in zip(inputs_coords, inputs_dir) for sub_item in item]
             for input_ in inputs:
                 yield input_
 
@@ -109,7 +107,7 @@ class TestGame:
         g.set_up()
         for p in g.player:
             assert len(p.fleet.fleet) == len(src.Game.GameRules.FLEET)
-            assert len(p.board.tiles) == src.Game.GameRules.SIZE ** 2
+            assert len(p.board.tiles) == src.Game.GameRules.SIZE**2
 
         sys.stdout = output
 
@@ -118,7 +116,7 @@ class TestGame:
         assert g.stopped
         g.set_up()
         size = src.Game.GameRules.SIZE
-        for i in range(size ** 2 - 1):
+        for i in range(size**2 - 1):
             x, y = i % size, i // size
             for p in g.player:
                 assert not g.stopped

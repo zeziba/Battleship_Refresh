@@ -40,7 +40,7 @@ class TestBoard:
         b = board
         assert len(b.tiles) == 0
         b.generate_board()
-        assert len(b.tiles) == src.Board.SIZE ** 2
+        assert len(b.tiles) == src.Board.SIZE**2
         for t in b.tiles:
             assert type(t) is src.Board.Tile.Tile
 
@@ -48,9 +48,7 @@ class TestBoard:
         b = board
         b.generate_board()
         b_out = b.output_readable()
-        assert (
-            len(b_out) == src.Board.SIZE ** 2 * len(src.Board.HITTILE) + src.Board.SIZE
-        )
+        assert len(b_out) == src.Board.SIZE**2 * len(src.Board.HITTILE) + src.Board.SIZE
         # print()
         # print(f"{b_out}")
         ship_tile = src.Board.Tile.Tile("Ship", False)
@@ -65,5 +63,5 @@ class TestBoard:
         b = board
         b.generate_board()
         b_out = b.output_array()
-        assert len(b_out) == src.Board.SIZE ** 2
+        assert len(b_out) == src.Board.SIZE**2
         assert all(type(tile) is int for tile in b_out)
