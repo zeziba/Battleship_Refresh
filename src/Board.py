@@ -1,14 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
 
 from .Logger import get_logger
 
 from . import config as _config
 from . import GameRules
-
-if TYPE_CHECKING:
-    from . import Tile
+from . import Tile
 
 logger = get_logger(__name__)
 
