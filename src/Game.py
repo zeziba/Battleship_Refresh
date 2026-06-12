@@ -6,18 +6,12 @@ from . import GameRules
 from . import Player
 from . import Ship
 from . import UI
+from . import GameConfig
 
 TESTING = False
 logger = get_logger(__name__)
 
 Difficulty = Player.Difficulty
-
-
-@dataclass
-class GameConfig:
-    board_width: int = GameRules.SIZE
-    board_height: int = GameRules.SIZE
-    fleet_composition: dict = field(default_factory=lambda: GameRules.FLEET)
 
 
 @dataclass()
