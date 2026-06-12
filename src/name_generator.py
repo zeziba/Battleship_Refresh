@@ -5,6 +5,7 @@ import random
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RESOURCE_FOLDER = "resources"
 
+
 class NameGenerator:
     _first_names: set[str] = set()
     _middle_names: set[str] = set()
@@ -21,7 +22,7 @@ class NameGenerator:
     def create_random_name(self) -> str:
         choice = random.choice
         return f"{choice(list(self._first_names))} {choice(list(self._middle_names))} of {choice(list(self._places))}"
-    
+
 
 if __name__ == "__main__":
     generator = NameGenerator()

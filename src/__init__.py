@@ -14,4 +14,5 @@ class GameConfig:
         self.board_width = GameRules.SIZE
         self.fleet_composition = GameRules.FLEET.copy()
 
+
 config = GameConfig()

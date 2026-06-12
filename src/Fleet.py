@@ -9,6 +9,7 @@ logger = get_logger(__name__)
 from . import GameRules
 from .Ship import Ship
 
+
 class FleetType(StrEnum):
     CARRIER = auto()
     BATTLESHIP = auto()
@@ -29,7 +30,7 @@ class GeneralFleet:
             FleetType.BATTLESHIP: "BATTLESHIP",
             FleetType.PATROLBOAT: "PATROLBOAT",
             FleetType.SUBMARINE: "SUBMARINE",
-            FleetType.DESTROYER: "DESTROYER"
+            FleetType.DESTROYER: "DESTROYER",
         }
 
         if self.fleet_comp:
@@ -41,7 +42,6 @@ class GeneralFleet:
             self._fleet = temp
 
             return
-        
 
         self._fleet = dict()
         for enum_type, rule_name in rule_map.items():
@@ -54,7 +54,7 @@ class GeneralFleet:
         if not self._fleet:
             return list()
         return list(self._fleet.values())
-    
+
     @property
     def all_sunk(self):
         logger.debug("Checking if each ship is sunk")
