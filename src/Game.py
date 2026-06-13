@@ -32,7 +32,7 @@ class Game:
     """
 
     players_dict: dict[str, Player.Player] = field(default_factory=dict)
-    
+
     @property
     def _get_turn(self) -> Generator[Tuple[int, Player.Player, Player.Player], None, None]:
         turn = 1
@@ -58,5 +58,5 @@ class Game:
                 shot_y=shot_y,
                 hit=is_hit,
                 sunk_ship=sunk_ship,
-                game_over=game_over
+                game_over=game_over,
             )

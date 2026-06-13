@@ -105,6 +105,7 @@ def set_validate_human_ship_input(display: Callable[[str], None]):
     global validate_human_ship_input
     validate_human_ship_input = wrapper
 
+
 def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
     raw_coords = UI.get_selection(prompt)
     parsed_coord = UI.parse_coord(raw_coords)
@@ -215,7 +216,7 @@ class Player:
 
         if self._fleet is None:
             raise ValueError(f"{self.name}'s Fleet not generated")
-        
+
         for ship in self.fleet.ships:
             logger.debug(f"\tAttempting to place Ship: {ship.name}")
             placed = False

@@ -27,10 +27,7 @@ def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
     p2 = create_player(p2_name, p2_difficulty, _config.board_width, _config.board_width, _config.fleet_composition)
     p2.generate_fleet(_config.fleet_composition)
 
-    player_dict = {
-        p1_name: p1,
-        p2_name: p2
-    }
+    player_dict = {p1_name: p1, p2_name: p2}
 
     return Game(players_dict=player_dict)
 
@@ -43,7 +40,13 @@ def run():
 
     for result in game.take_turns():
         UI.print_turn_result(result)
-        UI.print_boards(result.attacker.name, result.attacker.board, result.defender.name, result.defender.board, result.turnNumber % 50 == 0)
+        UI.print_boards(
+            result.attacker.name,
+            result.attacker.board,
+            result.defender.name,
+            result.defender.board,
+            result.turnNumber % 50 == 0,
+        )
 
         if result.game_over:
             UI.print_game_over(result.attacker.name, result.defender.board)

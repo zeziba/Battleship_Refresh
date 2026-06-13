@@ -16,8 +16,8 @@ if TYPE_CHECKING:
 
 from .GameRules import Output, check_xy
 
-
 DELAY: float = 0.5
+
 
 def get_valid_coordinates(prompt_message: str) -> tuple[int, int]:
     logger.debug("Attempting to get valid coords")
@@ -35,6 +35,7 @@ def get_valid_coordinates(prompt_message: str) -> tuple[int, int]:
             output(Output.INVALID_COORD)
             continue
         return x, y
+
 
 def parse_coord(raw_input: str) -> Optional[tuple[int, int]]:
     logger.debug(f"Parsing coords = {r'{}'.format(bytes(raw_input, 'utf-8'))}")
@@ -66,24 +67,30 @@ def parse_coord(raw_input: str) -> Optional[tuple[int, int]]:
 
     return None
 
+
 def get_selection(selection: str) -> str:
     logger.debug("Getting input from user")
     return input(f"{selection}")
 
+
 def output(selection: str) -> None:
     print(f"{selection}")
+
 
 def clear_screen():
     logger.debug("Clearing Screen")
     os.system("cls" if os.name == "nt" else "clear")
 
+
 def pause(self, seconds: Optional[float] = None):
     logger.debug("Initating Pause")
     time.sleep(seconds if seconds is not None else self.delay)
 
+
 def prompt_to_continue():
     logger.debug("Waiting for key press to continue")
     input("\nPress [Enter] to continue...")
+
 
 def print_board(board: Board.Board, hide_ships=False):
     logger.debug("Starting Board print")
@@ -108,7 +115,9 @@ def print_turn_result(results: TurnResult):
         output(Output.SUNK_SHIP.format(results.sunk_ship))
 
 
-def print_boards(p1_name: str, player1: Board.Board, p2_name: str,  player2: Board.Board, _pass: bool = False, hidden: bool = True):
+def print_boards(
+    p1_name: str, player1: Board.Board, p2_name: str, player2: Board.Board, _pass: bool = False, hidden: bool = True
+):
     logger.debug("Starting print_boards")
     output(Output.BOARD_PRINTPUT_HEADER_1.format(p1_name))
     print_board(player1, hidden)
@@ -117,6 +126,7 @@ def print_boards(p1_name: str, player1: Board.Board, p2_name: str,  player2: Boa
 
     if _pass:
         prompt_to_continue()
+
 
 def print_game_over(p1_name: str, defender: Board.Board, clear: bool = False):
     logger.debug("Starting Game Over print")

@@ -66,7 +66,7 @@ class GeneralFleet:
             if ship.hit(px, py):
                 return True
         return False
-    
+
     def is_defeated(self) -> bool:
         if self._fleet:
             return all(ship.is_sunk for ship in self._fleet.values())
