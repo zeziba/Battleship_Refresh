@@ -3,6 +3,8 @@ from unittest.mock import MagicMock
 
 from src import config as _config
 from src.Board import Board, HITTILE, EMPTYTILE
+from src.Tile import Tile
+from src.Ship import Ship
 
 
 class TestBoardSuite:
@@ -12,18 +14,12 @@ class TestBoardSuite:
 
     @pytest.fixture()
     def mock_tile(self):
-        tile = MagicMock()
-        tile.hit = False
-        tile.contains = None
-        tile.has = None
+        tile = MagicMock(spec=Tile)
         return tile
 
     @pytest.fixture()
     def mock_ship(self):
-        ship = MagicMock()
-        ship.name = ""
-        ship.length = 0
-        ship.is_sunk = False
+        ship = MagicMock(spec=Ship)
         return ship
 
     def test_board_initialization_defaults(self, fresh_board: Board):
@@ -40,6 +36,8 @@ class TestBoardSuite:
     def test_board_size_property(self, fresh_board: Board):
         expected_size = fresh_board.width * fresh_board.height
         assert fresh_board.size == expected_size
+        fresh_board.width = 0
+        assert fresh_board.size == 0
 
     def test_tiles_property_returns_immutable_tuple(self, fresh_board: Board):
         tiles_property = fresh_board.tiles
@@ -51,6 +49,18 @@ class TestBoardSuite:
     def test_convert_to_1d_index_valid(self, fresh_board: Board):
         assert fresh_board._convert_to_1d_index(0, 0) == 0
         assert fresh_board._convert_to_1d_index(1, 2) == 1 + (2 * fresh_board.width)
+        fresh_board.width = 0
+        with pytest.raises(ValueError) as err:
+            fresh_board._convert_to_1d_index(0, 1)
+            assert err == "Width or Height not set"
+
+    def test_get(self, fresh_board):
+        tile = fresh_board.get(0, 0)
+        assert isinstance(tile, Tile)
+
+    def test_tile_set(self, fresh_board, mock_tile):
+        fresh_board.tiles_set(0, 0, mock_tile)
+        assert fresh_board._tiles[0] == mock_tile
 
     @pytest.mark.parametrize("x, y", [(-1, 0), (1, 0), (0, -1), (0, 1)])
     def test_convert_to_1d_index_out_of_bounds_raises_index_error(self, fresh_board: Board, x: int, y: int):
