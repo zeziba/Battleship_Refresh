@@ -79,4 +79,3 @@ class TestBattleShipAISuite:
         x, y = fresh_hunt_ai.get_shot()
         assert (x, y) == (7, 7)
         assert len(fresh_hunt_ai.targets) == 0
-

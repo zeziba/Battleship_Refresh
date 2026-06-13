@@ -32,7 +32,7 @@ class TestFleetSuite:
     def test_fleet_initialization_populates_all_types(self, fresh_default_fleet, mock_gamerules_fleet):
         assert fresh_default_fleet._fleet is not None
         assert len(fresh_default_fleet._fleet) == 5
-        
+
         for enum_type in FleetType:
             assert enum_type in fresh_default_fleet._fleet
             ship_instance = fresh_default_fleet._fleet[enum_type]
@@ -45,7 +45,7 @@ class TestFleetSuite:
     def test_fleet_initialization_with_custom_fleet_comp(self, mock_gamerules_fleet):
         custom_comp = {"CARRIER": 5, "SUBMARINE": 3}
         custom_fleet = GeneralFleet(fleet_comp=custom_comp)
-        
+
         assert custom_fleet._fleet is not None
         assert len(custom_fleet._fleet) == 5
         assert custom_fleet.fleet_comp == custom_comp
@@ -77,7 +77,7 @@ class TestFleetSuite:
         mock_ships = []
         for i in range(5):
             mock_ship = MagicMock(spec=Ship)
-            mock_ship.is_sunk = (i != 4)
+            mock_ship.is_sunk = i != 4
             mock_ships.append(mock_ship)
 
         for enum_type, mock_ship in zip(FleetType, mock_ships):
@@ -96,7 +96,7 @@ class TestFleetSuite:
         fresh_default_fleet._fleet[FleetType.BATTLESHIP] = mock_ship_hit
 
         assert fresh_default_fleet.hit(2, 3) is True
-        
+
         mock_ship_miss.hit.assert_called_once_with(2, 3)
         mock_ship_hit.hit.assert_called_once_with(2, 3)
 

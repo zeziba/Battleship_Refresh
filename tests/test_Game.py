@@ -23,13 +23,13 @@ class TestGameSuite:
     @pytest.fixture
     def fresh_game(self, mock_ui, mock_player_classes) -> Game:
         return Game(players=(Difficulty.EASY, Difficulty.HARD))
-    
+
     # Initialization & Lifecycle Configuration Tests
 
     def test_game_post_init_flow(self, mock_ui, mock_player_classes):
         with patch("src.Game.Game.set_up") as mock_setup:
             game_instance = Game(players=(Difficulty.EASY, Difficulty.EASY))
-            
+
             mock_setup.assert_called_once()
             assert game_instance.state == GameRules.State.STOPPED
 
@@ -56,7 +56,7 @@ class TestGameSuite:
 
         mock_defender = MagicMock()
         mock_defender.is_already_targeted.side_effect = [True, False]
-        
+
         mock_tile = MagicMock()
         mock_tile.has = None
         mock_defender.take_at_self_shot.return_value = mock_tile
@@ -77,7 +77,7 @@ class TestGameSuite:
         mock_ship = MagicMock()
         mock_ship.is_sunk = False
         mock_ship.name = "Cruiser"
-        
+
         mock_tile = MagicMock()
         mock_tile.has = mock_ship
         mock_defender.take_at_self_shot.return_value = mock_tile
@@ -97,7 +97,7 @@ class TestGameSuite:
         mock_ship = MagicMock()
         mock_ship.is_sunk = True
         mock_ship.name = "Submarine"
-        
+
         mock_tile = MagicMock()
         mock_tile.has = mock_ship
         mock_defender.take_at_self_shot.return_value = mock_tile
@@ -112,18 +112,18 @@ class TestGameSuite:
     def test_take_turns_clears_screen_at_intervals(self, fresh_game, mock_ui):
         mock_attacker = MagicMock()
         mock_defender = MagicMock()
-        
+
         with patch.object(Game, "_get_turn", new_callable=property) as mock_get_turn:
-            mock_get_turn.return_value = [ # pyright: ignore[reportAttributeAccessIssue]
+            mock_get_turn.return_value = [  # pyright: ignore[reportAttributeAccessIssue]
                 (0, mock_attacker, mock_defender),
                 (1, mock_attacker, mock_defender),
-                (2, mock_attacker, mock_defender)
+                (2, mock_attacker, mock_defender),
             ]
-            
+
             # Patch child loop step out to avoid downstream exception generation
             with patch.object(Game, "_take_turn") as mock_single_turn_step:
                 fresh_game.take_turns()
-                
+
                 # Turn 0 triggers clear, plus initial entry call, turn 3 isn't reached here
                 # Check your code structure: calls at entry, and if turn % 3 == 0 inside loop
                 assert mock_ui.clear_screen.call_count >= 2
