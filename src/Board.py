@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 
 from .Logger import get_logger
 
-from . import config as _config
+from . import config
 from . import GameRules
 from . import Tile
 
@@ -15,8 +15,8 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = field(default=_config.board_width)
-    width: int = field(default=_config.board_width)
+    height: int = field(default=config.board_width)
+    width: int = field(default=config.board_width)
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
     def __post_init__(self):
@@ -69,8 +69,3 @@ class Board:
             return False
 
         return all(tile.has.is_sunk if tile.has else False for tile in occupied)
-
-    def output_array(self) -> tuple[int, ...]:
-        logger.debug("Generating output array")
-        score = lambda hit, contains: 1 if (not hit and contains) else 0
-        return tuple(score(tile.hit, tile.contains) for tile in self.tiles)

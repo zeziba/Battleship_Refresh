@@ -66,10 +66,3 @@ class GeneralFleet:
             if ship.hit(px, py):
                 return True
         return False
-
-    def other_ships(self, target_ship: Ship):
-        logger.debug("Checking if ship is the target ship")
-        for ship in self.ships:
-            if ship is target_ship:
-                continue
-            yield ship

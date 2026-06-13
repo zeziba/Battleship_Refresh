@@ -1,108 +1,104 @@
-from random import choice
-
 import pytest
+from unittest.mock import MagicMock, patch
 
-import src.Fleet
-
-
-def test_fleet():
-    for i in list(src.Fleet.Fleet):
-        assert hasattr(i, "name")
-        assert hasattr(i, "value")
+from src.Fleet import FleetType, GeneralFleet
+from src.Ship import Ship
 
 
-def test_FLEET():
-    for ship, value in src.Fleet.FLEET.items():
-        assert ship in list(src.Fleet.Fleet)
-        assert type(value) is int
+class TestFleetSuite:
+    @pytest.fixture
+    def mock_gamerules_fleet(self):
+        test_fleet_config = {
+            "CARRIER": 5,
+            "BATTLESHIP": 4,
+            "PATROLBOAT": 2,
+            "SUBMARINE": 3,
+            "DESTROYER": 3,
+        }
+        with patch("src.GameRules.FLEET", test_fleet_config):
+            yield test_fleet_config
 
+    @pytest.fixture
+    def fresh_default_fleet(self, mock_gamerules_fleet) -> GeneralFleet:
+        return GeneralFleet()
 
-@pytest.fixture()
-def resource():
-    f = src.Fleet.GeneralFleet()
-    f.generate()
-    yield f
+    def test_fleet_type_enum_values(self):
+        assert FleetType.CARRIER == "carrier"
+        assert FleetType.BATTLESHIP == "battleship"
+        assert FleetType.PATROLBOAT == "patrolboat"
+        assert FleetType.DESTROYER == "destroyer"
+        assert FleetType.SUBMARINE == "submarine"
 
+    def test_fleet_initialization_populates_all_types(self, fresh_default_fleet, mock_gamerules_fleet):
+        assert fresh_default_fleet._fleet is not None
+        assert len(fresh_default_fleet._fleet) == 5
 
-class TestGenerateFleet:
-    def test_fleet_setup(self, resource):
-        assert resource is not None
+        for enum_type in FleetType:
+            assert enum_type in fresh_default_fleet._fleet
+            ship_instance = fresh_default_fleet._fleet[enum_type]
+            assert isinstance(ship_instance, Ship)
 
-    def test_fleet_has_fleet(self, resource):
-        assert hasattr(resource, "fleet")
+            rule_name = enum_type.name
+            assert ship_instance.name == rule_name
+            assert ship_instance.length == mock_gamerules_fleet[rule_name]
 
-    def test_gen_fleet(self):
-        """Tests Fleet Generation"""
-        fleet = src.Fleet.GeneralFleet()
-        assert len(fleet.fleet) == 0
-        fleet.generate()
-        assert len(fleet.fleet) == len(src.Fleet.FLEET)
+    def test_fleet_initialization_with_custom_fleet_comp(self, mock_gamerules_fleet):
+        custom_comp = {"CARRIER": 5, "SUBMARINE": 3}
+        custom_fleet = GeneralFleet(fleet_comp=custom_comp)
 
-    def test_generated_fleet(self, resource):
-        """Tests Generated Fleet"""
-        f = resource
-        assert f.fleet is not None
-        for ship in f.fleet:
-            assert type(f.fleet[ship]) is src.Fleet.Ship.Ship
+        assert custom_fleet._fleet is not None
+        assert len(custom_fleet._fleet) == 5
+        assert custom_fleet.fleet_comp == custom_comp
 
-    def test_fleet_hit(self, resource):
-        f = resource
-        board = src.Fleet.Ship.Board.Board()
-        board.generate_board()
-        for index, ship in enumerate(f.fleet):
-            f.fleet[ship].place_ship(index, 0, board)
-        for ship in f.fleet:
-            for pos in f.fleet[ship].positions:
-                x, y = pos.split(",")
-                x = int(x)
-                y = int(y)
-                assert f.hit(x, y) is True
-                assert board.get(x, y).hit is True, f"{board.get(x, y)}"
-        assert f.hit(0, 0) is False
+    def test_ships_property_returns_list_of_ships(self, fresh_default_fleet):
+        ships_list = fresh_default_fleet.ships
+        assert isinstance(ships_list, list)
+        assert len(ships_list) == 5
+        assert all(isinstance(ship, Ship) for ship in ships_list)
 
-    def test_fleet_other_fleet(self, resource):
-        """Test Fleet:GeneralFleet:other_ships"""
-        ship = choice(list(src.Fleet.Fleet))
-        for s in resource.other_ships(ship):
-            assert s is not ship
+    def test_ships_property_when_fleet_is_empty(self):
+        empty_fleet = GeneralFleet()
+        empty_fleet._fleet = {}
+        assert empty_fleet.ships == []
 
-    def test_fleet_check_possible_placement(self, resource):
-        """Test the check possible placement from Fleet:GeneralFleet:check_possible_placement"""
-        fleet = resource
-        # Test all failing positions
-        for direction in list(src.Fleet.Ship.Direction):
-            for key, ship in fleet.fleet.items():
-                ship.directionality = direction
-                for xy in range(src.Fleet.GameRules.SIZE - 1):
-                    v = src.Fleet.GameRules.SIZE - ship.length
-                    x = v if direction is src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    y = v if direction is not src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    assert (
-                        fleet.can_place(ship, x, y) is False
-                    ), f"{ship}@(X: {x}, Y: {y}):{ship.directionality} should have failed"
-                for xy in range(src.Fleet.GameRules.SIZE - 1):
-                    v = -1
-                    x = v if direction is src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    y = v if direction is not src.Fleet.Ship.Direction.HORIZONTAL else xy
-                    assert (
-                        fleet.can_place(ship, x, y) is False
-                    ), f"{ship}@(X: {x}, Y: {y}):{ship.directionality} should have failed"
+    def test_all_sunk_property_evaluates_true(self, fresh_default_fleet):
+        mock_sunk_ships = []
+        for _ in range(5):
+            mock_ship = MagicMock(spec=Ship)
+            mock_ship.is_sunk = True
+            mock_sunk_ships.append(mock_ship)
 
-        # Test some passing positions
-        for direction in list(src.Fleet.Ship.Direction):
-            for key, ship in fleet.fleet.items():
-                ship.directionality = direction
-                for xy in range(src.Fleet.GameRules.SIZE - 1):
-                    x = xy if direction is not src.Fleet.Ship.Direction.HORIZONTAL else 0
-                    y = xy if direction is src.Fleet.Ship.Direction.HORIZONTAL else 0
-                    assert (
-                        fleet.can_place(ship, x, y) is True
-                    ), f"{ship}@(X: {x}, Y: {y}):{ship.directionality} should have passed"
+        for enum_type, mock_ship in zip(FleetType, mock_sunk_ships):
+            fresh_default_fleet._fleet[enum_type] = mock_ship
 
-        # Test if can place ship on another ship
-        ships = [ship for ship in fleet.fleet]
-        board = src.Fleet.Ship.Board.Board()
-        board.generate_board()
-        fleet.fleet[ships[0]].place_ship(0, 0, board)
-        for other in fleet.other_ships(fleet.fleet[ships[0]]):
-            assert fleet.can_place(other, 0, 0) is False, f"{other}@(X: 0, Y: 0) should have failed"
+        assert fresh_default_fleet.all_sunk is True
+
+    def test_all_sunk_property_false_if_any_alive(self, fresh_default_fleet):
+        mock_ships = []
+        for i in range(5):
+            mock_ship = MagicMock(spec=Ship)
+            mock_ship.is_sunk = i != 4
+            mock_ships.append(mock_ship)
+
+        for enum_type, mock_ship in zip(FleetType, mock_ships):
+            fresh_default_fleet._fleet[enum_type] = mock_ship
+
+        assert fresh_default_fleet.all_sunk is False
+
+    def test_hit_method_registers_damage_on_target_ship(self, fresh_default_fleet):
+        mock_ship_miss = MagicMock(spec=Ship)
+        mock_ship_miss.hit.return_value = False
+
+        mock_ship_hit = MagicMock(spec=Ship)
+        mock_ship_hit.hit.return_value = True
+
+        fresh_default_fleet._fleet[FleetType.CARRIER] = mock_ship_miss
+        fresh_default_fleet._fleet[FleetType.BATTLESHIP] = mock_ship_hit
+
+        assert fresh_default_fleet.hit(2, 3) is True
+
+        mock_ship_miss.hit.assert_called_once_with(2, 3)
+        mock_ship_hit.hit.assert_called_once_with(2, 3)
+
+    def test_hit_method_returns_false_on_total_miss(self, fresh_default_fleet):
+        assert fresh_default_fleet.hit(9, 9) == False

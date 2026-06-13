@@ -46,6 +46,7 @@ class Random(BattleShipAI):
 
         x, y = random.choice(self.left_overs)
         self.left_overs.remove((x, y))
+        self.shots_taken.add((x, y))
         return x, y
 
     def register_hit(self, x: int, y: int, has_sunk: bool = False):
@@ -118,15 +119,4 @@ class HuntAndTargetAIAdv(BattleShipAI):
 
 
 class ProbabilityAI(BattleShipAI):
-    _starting_ships: dict[str, int]
-
-    def __init__(self) -> None:
-        self.board_size = GameRules.SIZE
-
-    @property
-    def starting_ships(self):
-        return self._starting_ships
-
-    @starting_ships.setter
-    def starting_ships(self, ships):
-        self._starting_ships = ships
+    pass
