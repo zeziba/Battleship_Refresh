@@ -9,7 +9,7 @@ class TestBoardSuite:
     @pytest.fixture()
     def fresh_board(self) -> Board:
         return Board()
-    
+
     @pytest.fixture()
     def mock_tile(self):
         tile = MagicMock()
@@ -17,7 +17,7 @@ class TestBoardSuite:
         tile.contains = None
         tile.has = None
         return tile
-    
+
     @pytest.fixture()
     def mock_ship(self):
         ship = MagicMock()
@@ -25,7 +25,7 @@ class TestBoardSuite:
         ship.length = 0
         ship.is_sunk = False
         return ship
-    
+
     def test_board_initialization_defaults(self, fresh_board: Board):
         assert fresh_board.width == _config.board_width
         assert fresh_board.height == _config.board_height
@@ -46,22 +46,17 @@ class TestBoardSuite:
         assert isinstance(tiles_property, tuple)
 
         with pytest.raises(TypeError):
-            tiles_property[0] = MagicMock() # pyright: ignore[reportIndexIssue]
-    
+            tiles_property[0] = MagicMock()  # pyright: ignore[reportIndexIssue]
+
     def test_convert_to_1d_index_valid(self, fresh_board: Board):
         assert fresh_board._convert_to_1d_index(0, 0) == 0
         assert fresh_board._convert_to_1d_index(1, 2) == 1 + (2 * fresh_board.width)
 
-    @pytest.mark.parametrize("x, y", [
-        (-1, 0),
-        (1, 0),
-        (0, -1),
-        (0, 1)
-    ])
-    def test_convert_to_1d_index_out_of_bounds_raises_index_error(self, fresh_board: Board,x: int, y: int):
+    @pytest.mark.parametrize("x, y", [(-1, 0), (1, 0), (0, -1), (0, 1)])
+    def test_convert_to_1d_index_out_of_bounds_raises_index_error(self, fresh_board: Board, x: int, y: int):
         if 0 <= x < fresh_board.width and 0 <= y < fresh_board.height:
             pytest.skip("Parameterized coordinate is accidentally valid for current default size")
-        
+
         with pytest.raises(IndexError, match="track outside of board"):
             fresh_board._convert_to_1d_index(x, y)
 
@@ -77,7 +72,7 @@ class TestBoardSuite:
 
         assert fresh_board.all_ships_sunk is True
 
-    def  test_all_ships_sunk_false(self, fresh_board: Board):
+    def test_all_ships_sunk_false(self, fresh_board: Board):
         mock_ship_1 = MagicMock()
         mock_ship_1.is_sunk = True
         mock_ship_2 = MagicMock()
