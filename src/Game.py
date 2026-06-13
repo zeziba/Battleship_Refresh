@@ -1,12 +1,9 @@
 from dataclasses import dataclass, field
+from typing import Generator, Tuple
 
 from .Logger import get_logger
 
-from . import GameRules
 from . import Player
-from . import Ship
-from . import UI
-from . import GameConfig
 
 TESTING = False
 logger = get_logger(__name__)
@@ -14,236 +11,52 @@ logger = get_logger(__name__)
 Difficulty = Player.Difficulty
 
 
+@dataclass
+class TurnResult:
+    turnNumber: int
+    attacker: Player.Player
+    defender: Player.Player
+    shot_x: int
+    shot_y: int
+    hit: bool
+    sunk_ship: str = ""
+    game_over: bool = False
+
+
 @dataclass()
 class Game:
     """
     Create and maintain the differing objects to enable a game of battleship to be played.
 
-    Objects:
-        Player
-        Board -> Tile
-        Fleet -> Ship
-
     The rules of the game are "simple."
     """
 
-    players: tuple[Difficulty, Difficulty]
     players_dict: dict[str, Player.Player] = field(default_factory=dict)
-    state: GameRules.State = field(default=GameRules.State.STOPPED)
-    config: GameConfig = field(default_factory=GameConfig)
-    _UI: UI.UI = field(default_factory=UI.UI)
-
-    def __post_init__(self):
-        logger.debug("Post-init")
-        self.set_up()
-        logger.debug(f"Set up finished there are {len(self.players_dict)} players")
-
+    
     @property
-    def iter_players(self):
-        logger.info("yielding players")
-        yield from self.players_dict.values()
-
-    def stop(self) -> None:
-        self.state = GameRules.State.STOPPED
-        logger.info(f"Game set to {self.state}")
-
-    def start(self) -> None:
-        self.state = GameRules.State.RUNNING
-        logger.info(f"Game set to {self.state}")
-
-    @property
-    def stopped(self) -> bool:
-        logger.info("Checking if game has stopped")
-        return self.state == GameRules.State.STOPPED
-
-    def _check(self, coords: tuple[int, int], h_v: str, p: Player.Player, ship: Ship.Ship) -> bool:
-        """
-        Validates whether a ship can be placed at the given coordinates and orientation.
-
-        :Args:
-            :p: The Player object placing the ship.
-            :ship: The Ship object being placed.
-            :coords: A tuple of (x, y) integers representing the starting position.
-            :h_v: A string ('h' or 'v') representing the orientation.
-
-        :Returns:
-            bool: True if the placement is valid, False otherwise.
-        """
-        x, y = coords
-        h_v = h_v.strip().lower()
-        logger.debug(f"Checking {p.name} at ({x}, {y}) with {h_v}")
-        if h_v not in ("h", "v") or len(h_v) != 1:
-            self._UI.output(GameRules.Output.DIR_INVALID)
-            return False
-        directionality = Ship.Direction.HORIZONTAL if h_v == "h" else Ship.Direction.VERTICAL
-        if not GameRules.check_xy(x, y):
-            return False
-
-        try:
-            projected_coords = list(Ship.Ship.possible_places(x, y, ship.length, directionality))
-        except Exception as ex:
-            self._UI.output(GameRules.Output.FAILED_PLACE.format(ship.name, x, y, directionality))
-            logger.warning(ex)
-            return False
-
-        for px, py in projected_coords:
-            for existing_ship in p.get_ships:
-                if existing_ship.is_placed and existing_ship.contains(px, py):
-                    self._UI.output(GameRules.Output.OVERLAP.format(x, y, existing_ship.name))
-                    return False
-
-        return True
-
-    def _testing_ship_placer(self, p: Player.Player, i: int = 0):
-        logger.debug("TESTING: Generating ships")
-        for ship in p.get_ships:
-            ship.place_ship(i := i + 1, 0, p.board)
-
-    def set_up(self) -> None:
-        logger.info("Starting set-up")
-        for p in self.iter_players:
-            logger.info(f"\tPlayer {p}")
-            logger.info(f"Player is {p.difficulty} - starting fleet generation")
-            if TESTING:
-                logger.info("\tTesting enabled - generic ship placement")
-                self._testing_ship_placer(p)
-                continue
-            if p.is_ai:
-                p.auto_ship_placement()
-                continue
-
-            # Is player
-            def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
-                raw_coords = self._UI.get_selection(prompt)
-                parsed_coord = self._UI.parse_coord(raw_coords)
-                if parsed_coord is None:
-                    logger.debug(f"Failed to enter proper coords with {parsed_coord}")
-                    self._UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
-                return parsed_coord
-
-            p.set_input_hook(get_user_coord_input)
-            for ship in p.get_ships:
-                valid_placement = False
-                logger.debug(f"\tAttempting to place Ship: {ship.name}")
-                while not valid_placement:
-                    self._UI.output(GameRules.Output.PLACE.format(ship.name))
-                    raw_coords = self._UI.get_selection(GameRules.Output.COORD_ENTER_GENERIC)
-                    parsed_coord = self._UI.parse_coord(raw_coords)
-                    if parsed_coord is None:
-                        self._UI.output(GameRules.Output.MANGLED_PLACE.format(ship.name))
-                        self._UI.output(GameRules.Output.WRONG_INPUT.format(GameRules.Output.EXAMPLE_1))
-                        continue
-                    x, y = parsed_coord
-                    if not GameRules.check_xy(x, y):
-                        self._UI.output(GameRules.Output.OUTSIDE_BOARD.format(x, y))
-                        continue
-                    h_v = self._UI.get_selection(GameRules.Output.DIR_ENTER)
-                    valid_placement = self._check((x, y), h_v, p, ship)
-
-                    if valid_placement:
-                        _d = Ship.Direction.HORIZONTAL if h_v.strip().lower() == "h" else Ship.Direction.VERTICAL
-                        ship.directionality = _d
-
-                        ship.place_ship(x, y, p.board)
-                        logger.debug(f"\tPlaced {ship.name} at ({x}, {y}, {h_v})")
-        logger.info("Exiting set-up and starting game loop")
-        self.start()
-
-    @property
-    def any_won(self) -> bool:
-        logger.info("Checking if any player has won")
-        for p in self.iter_players:
-            if p.fleet.all_sunk:
-                self.stop()
-                return True
-        return False
-
-    def output_player(self, player: Player.Player, hidden: bool = True):
-        logger.info(f"Is {'' if hidden else 'not'} outputing to screen")
-        # self.UI.output(player.board.output_readable(hidden=hidden))
-        self._UI.print_board(player.board, hidden)
-
-    @property
-    def _get_turn(self):
-        """
-        Infinite Turn Generator that yields the turn number, the attacking player
-        and the defending player
-        """
-        logger.info("Init turn generator")
-
-        if len(self.players_dict) != 2:
-            logger.debug("Game failed to have two players")
-            raise ValueError("Game requires exactly two players!")
-
-        player_list = list(self.players_dict.values())
-        attacker = player_list[0]
-        defender = player_list[1]
-
+    def _get_turn(self) -> Generator[Tuple[int, Player.Player, Player.Player], None, None]:
         turn = 1
-
-        while not self.stopped:
+        players: list[Player.Player] = list(self.players_dict.values())
+        attacker, defender = players[0], players[1]
+        while True:
+            attacker, defender = defender, attacker
             yield turn, attacker, defender
 
-            attacker, defender = defender, attacker
             turn += 1
 
-    def _get_valid_shot(self, attacker: Player.Player, defender: Player.Player):
-        logger.debug("Attemping to get valid shot")
-        while True:
-            self._UI.output(GameRules.Output.PRE_SHOT.format(defender.name))
-            x, y = attacker.choose_target()
-
-            if defender.is_already_targeted(x, y):
-                logger.debug("\tLocation already selected")
-                self._UI.output(GameRules.Output.TRY_AGAIN)
-                continue
-
-            return x, y
-
-    def _take_turn(self, attacker: Player.Player, defender: Player.Player) -> None:
-        """
-        Take a turn, the presumption is that the given player is the player being worked on.
-        Meaning its the other players turn other than the given player.
-        """
-        logger.info(f"{attacker.name} is attacking {defender.name}.")
-        while True:
-            x, y = attacker.choose_target()
-
-            if defender.is_already_targeted(x, y):
-                self._UI.output(GameRules.Output.TRY_AGAIN)
-                continue
-            break
-
-        tile = defender.take_at_self_shot(x, y)
-
-        if tile.has:
-            if tile.has.is_sunk:
-                self._UI.output(GameRules.Output.SUNK_SHIP.format(tile.has.name))
-            else:
-                self._UI.output(GameRules.Output.SHOT_AT.format(x, y, tile.has.name))
-        else:
-            self._UI.output(GameRules.Output.SHOT_AT.format(x, y, "nothing"))
-
-        self.output_player(defender)
-        attacker.process_shot_result(x, y, tile)
-
     def take_turns(self):
-        logger.info("Taking a turn")
-        self._UI.clear_screen()
-        current: Player.Player | None = None
-
         for turn, attacker, defender in self._get_turn:
-            if turn % 3 == 0:
-                self._UI.clear_screen()
-            logger.debug(f"Turn: {turn} by {attacker.name} against {defender.name}")
-            self._UI.output(GameRules.Output.CURRENT_TURN.format(turn, defender.name))
-            self._take_turn(attacker, defender)
-            current = attacker
-            # self.UI.pause(self.UI.delay)
-            # if turn == 100:
-            #     self.UI.prompt_to_continue()
-            if self.any_won:
-                break
+            shot_x, shot_y, is_hit, sunk_ship = attacker.take_turn(defender)
 
-        if current:
-            self._UI.output(GameRules.Output.WON_GAME.format(current.name))
+            game_over = defender.fleet.is_defeated()
+
+            yield TurnResult(
+                turnNumber=turn,
+                attacker=attacker,
+                defender=defender,
+                shot_x=shot_x,
+                shot_y=shot_y,
+                hit=is_hit,
+                sunk_ship=sunk_ship,
+                game_over=game_over
+            )
