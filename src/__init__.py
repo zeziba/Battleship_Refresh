@@ -17,3 +17,8 @@ class GameConfig:
 
 
 config = GameConfig()
+
+
+def check_xy(x: int, y: int) -> bool:
+    """Checks if the x, y coords fall within the board"""
+    return (0 <= x < config.board_width) and (0 <= y < config.board_height)

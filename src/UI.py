@@ -14,8 +14,8 @@ if TYPE_CHECKING:
     from . import Board
     from .Game import TurnResult
 
-
-from .GameRules import Output, check_xy
+from . import check_xy
+from .GameRules import Output
 
 DELAY: float = 0.5
 

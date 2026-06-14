@@ -4,9 +4,10 @@ from enum import auto, StrEnum
 import random
 from typing import TYPE_CHECKING, Callable, Optional, Any, Generator
 
+from . import check_xy
 from .Ship import Direction
 from .Logger import get_logger
-from .GameRules import Output, check_xy
+from .GameRules import Output
 from . import AI
 from . import Board
 from . import Fleet
