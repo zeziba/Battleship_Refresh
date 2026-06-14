@@ -105,7 +105,7 @@ def _generate_board_output(board: Board.Board, hide_ships: bool = False):
             row_str += tile.get_rendered_logo(hide_ships)
         body += f"\n{row_str}"
 
-    return f"{header_row}\n{body}"
+    return f"{header_row}{body}"
 
 
 def print_board(board: Board.Board, hide_ships=False):
