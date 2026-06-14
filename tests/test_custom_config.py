@@ -51,19 +51,19 @@ class TestCustomConfig:
         without mutating the underlying baseline definitions inside GameRules.
         """
         mock_fleet = {"Carrier": 5, "Battleship": 4, "Destroyer": 3}
-        
+
         with patch.dict(GameRules.FLEET, mock_fleet, clear=True):
             test_config = GameConfig()
-            
+
             assert len(test_config.fleet_composition) == 3
-            
+
             # Simulate a dynamic runtime runtime modification
             test_config.fleet_composition["Submarine"] = 99
             assert "Submarine" in test_config.fleet_composition
-            
+
             # Fire configuration normalization cleanup hook
             test_config.reset_defaults()
-            
+
             # Confirm the configuration successfully stripped the mutated submarine key
             assert "Submarine" not in test_config.fleet_composition
             assert len(test_config.fleet_composition) == 3
