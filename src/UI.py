@@ -104,8 +104,8 @@ def _generate_board_output(board: Board.Board, hide_ships: bool = False):
             tile: Tile.Tile = board.get(x, y)
             row_str += tile.get_rendered_logo(hide_ships)
         body += f"\n{row_str}"
-    
-    return  f"{header_row}\n{body}"
+
+    return f"{header_row}\n{body}"
 
 
 def print_board(board: Board.Board, hide_ships=False):
@@ -123,7 +123,7 @@ def print_turn_result(results: TurnResult):
 
 
 def strip_ansi(text: str):
-    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
     return ansi_escape.sub("", text)
 
 
@@ -134,10 +134,10 @@ def print_boards(
 
     p1_out = f"{Output.BOARD_PRINTPUT_HEADER_1.format(p1_name)}"
     p2_out = f"{Output.BOARD_PRINTPUT_HEADER_2.format(p2_name)}"
-    
+
     p1_body = _generate_board_output(player1, hidden).split("\n")
     p2_body = _generate_board_output(player2, hidden).split("\n")
-    
+
     max_board_width = max((len(strip_ansi(line)) for line in p1_body), default=0)
     col_width = max(len(strip_ansi(p1_out)), max_board_width) + 5
 
@@ -145,9 +145,9 @@ def print_boards(
         visible_len = len(strip_ansi(line))
         padding_needed = max(0, width - visible_len)
         return line + (" " * padding_needed)
-    
+
     out = f"{p1_out:<{col_width}}     {p2_out}\n"
-    
+
     for i in range(len(p1_body)):
         left_line = pad_line(p1_body[i], col_width)
         out += f"{left_line}{p2_body[i]}\n"

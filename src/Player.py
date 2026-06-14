@@ -37,9 +37,7 @@ def create_player(name: str, difficulty: Difficulty, board: Board.Board, fleet_c
     # elif p.difficulty == Difficulty.HARD:
     #     p._ai_brain = AI.ProbabilityAI()
 
-    return Player(
-        name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain
-    )
+    return Player(name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain)
 
 
 def has_overlap(board: Board.Board, positions: list[tuple[int, int]]) -> bool:
@@ -282,7 +280,7 @@ class Player:
     def take_turn(self, opp: Player) -> tuple[int, int, bool, str]:
         x, y = self.choose_target()
         tile: Tile.Tile = opp.take_at_self_shot(x, y)
-        
+
         self.process_shot_result(x, y, tile)
 
         if tile.has and tile.hit:
