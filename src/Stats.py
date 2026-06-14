@@ -14,23 +14,25 @@ class DifficultyStats:
 
     @property
     def avg_turns_to_win(self) -> float:
-        return self.total_turns_won/ self.wins if self.wins > 0 else 0.0
-    
+        return self.total_turns_won / self.wins if self.wins > 0 else 0.0
+
     @property
     def avg_turns_to_lose(self) -> float:
         return self.total_turns_lost / self.losses if self.losses > 0 else 0.0
-    
+
     @property
     def win_rate(self) -> float:
         total_games = self.wins + self.losses
         return trunc((self.wins / total_games) * 1e3) / 1e1 if total_games > 0 else 0.0
-    
+
 
 @dataclass
 class GameStatTracker:
-    by_difficulty: dict[str, DifficultyStats] = field(default_factory=lambda: {diff.value: DifficultyStats() for diff in Difficulty})
+    by_difficulty: dict[str, DifficultyStats] = field(
+        default_factory=lambda: {diff.value: DifficultyStats() for diff in Difficulty}
+    )
 
-    def  record_game(self, winner_difficult: Difficulty, loser_difficulty: Difficulty, total_turns: int):
+    def record_game(self, winner_difficult: Difficulty, loser_difficulty: Difficulty, total_turns: int):
         winner_stats = self.by_difficulty[winner_difficult.value]
         loser_stats = self.by_difficulty[loser_difficulty.value]
 
@@ -56,12 +58,10 @@ class GameStatTracker:
             wl_str = f"{stats.wins}/{stats.losses}"
             avg_w = f"{stats.avg_turns_to_win:.1f}" if stats.wins > 0 else "N/A"
             avg_l = f"{stats.avg_turns_to_lose:.1f}" if stats.losses > 0 else "N/A"
-        
-            output(Output.STATS_OUTPUT.format(
-                f"{diff.upper():<12}",
-                f"{win_rate_str:<10}",
-                f"{wl_str:<6}",
-                f"{avg_w:<10}",
-                f"{avg_l}"
-            ))
+
+            output(
+                Output.STATS_OUTPUT.format(
+                    f"{diff.upper():<12}", f"{win_rate_str:<10}", f"{wl_str:<6}", f"{avg_w:<10}", f"{avg_l}"
+                )
+            )
         output(Output.STATS_FILLER)
