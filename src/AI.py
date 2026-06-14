@@ -42,7 +42,7 @@ class Random(BattleShipAI):
                 self.potential_shots.remove(shot)
             self.shots_taken.add(shot)
             return shot
-        
+
         if not self.potential_shots:
             raise IndexError("No more potential shots on the board")
 
@@ -55,10 +55,7 @@ class Random(BattleShipAI):
         if has_hit:
             self.unsunk_hits.append(shot)
             if sunk_ship:
-                self.unsunk_hits = [
-                    pos for pos in self.unsunk_hits
-                    if not sunk_ship.contains(pos[0], pos[1])
-                ]
+                self.unsunk_hits = [pos for pos in self.unsunk_hits if not sunk_ship.contains(pos[0], pos[1])]
                 self._rebuild_priority_targets()
             else:
                 self._generate_targets_around(shot)
@@ -121,10 +118,7 @@ class HuntAndTargetAIAdv(BattleShipAI):
             if sunk_ship:
                 if sunk_ship.name in self.ships_left:
                     self.ships_left.pop(sunk_ship.name)
-                self.unsunk_hits = [
-                    pos for pos in self.unsunk_hits
-                    if not sunk_ship.contains(pos[0], pos[1])
-                ]
+                self.unsunk_hits = [pos for pos in self.unsunk_hits if not sunk_ship.contains(pos[0], pos[1])]
             else:
                 self._generate_targets_around(shot)
 

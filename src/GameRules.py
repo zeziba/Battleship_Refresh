@@ -43,12 +43,6 @@ UnknownTile = f"{Colors.WHITE}U {Colors.END}"
 MissTile = f"{Colors.DARK_GRAY}+{Colors.END} "
 
 
-def check_xy(x: int, y: int) -> bool:
-    """Checks if the x, y coords fall within the board"""
-    logger.info(f"Checking ({x}, {y})")
-    return (0 <= x < SIZE) and (0 <= y < SIZE)
-
-
 FLEET = {
     "CARRIER": 5,
     "BATTLESHIP": 4,

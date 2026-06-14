@@ -5,6 +5,7 @@ from .Logger import get_logger
 
 logger = get_logger(__name__)
 
+from . import check_xy
 from .Board import Board, GameRules
 from .Tile import Tile
 
@@ -51,7 +52,7 @@ class Ship:
         logger.debug(f"Attempting to place ship {self.name}")
         if len(self._positions) == 0:
             for x, y in self.possible_places(start_x, start_y, self.length, self.directionality):
-                if GameRules.check_xy(x, y):
+                if check_xy(x, y):
                     self._positions[(x, y)] = board.tiles_set(x, y, Tile(self, False))
                 else:
                     raise IndexError(f"({x},{y}) is not a valid move")
