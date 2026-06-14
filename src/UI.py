@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 import os
 import time
+import re
 
 from .Logger import get_logger
 
@@ -92,10 +93,9 @@ def prompt_to_continue():
     input("\nPress [Enter] to continue...")
 
 
-def print_board(board: Board.Board, hide_ships=False):
-    logger.debug("Starting Board print")
+def _generate_board_output(board: Board.Board, hide_ships: bool = False):
     header_row = "   " + " ".join([str(i) for i in range(board.width)])
-    print(header_row)
+    body = ""
 
     for y in range(board.height):
         row_str = f"{y} |"
@@ -103,7 +103,14 @@ def print_board(board: Board.Board, hide_ships=False):
         for x in range(board.width):
             tile: Tile.Tile = board.get(x, y)
             row_str += tile.get_rendered_logo(hide_ships)
-        print(row_str)
+        body += f"\n{row_str}"
+    
+    return  f"{header_row}\n{body}"
+
+
+def print_board(board: Board.Board, hide_ships=False):
+    logger.debug("Starting Board print")
+    print(_generate_board_output(board, hide_ships))
 
 
 def print_turn_result(results: TurnResult):
@@ -115,14 +122,37 @@ def print_turn_result(results: TurnResult):
         output(Output.SUNK_SHIP.format(results.sunk_ship))
 
 
+def strip_ansi(text: str):
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    return ansi_escape.sub("", text)
+
+
 def print_boards(
     p1_name: str, player1: Board.Board, p2_name: str, player2: Board.Board, _pass: bool = False, hidden: bool = True
 ):
     logger.debug("Starting print_boards")
-    output(Output.BOARD_PRINTPUT_HEADER_1.format(p1_name))
-    print_board(player1, hidden)
-    output(Output.BOARD_PRINTPUT_HEADER_2.format(p2_name))
-    print_board(player2, hidden)
+
+    p1_out = f"{Output.BOARD_PRINTPUT_HEADER_1.format(p1_name)}"
+    p2_out = f"{Output.BOARD_PRINTPUT_HEADER_2.format(p2_name)}"
+    
+    p1_body = _generate_board_output(player1, hidden).split("\n")
+    p2_body = _generate_board_output(player2, hidden).split("\n")
+    
+    max_board_width = max((len(strip_ansi(line)) for line in p1_body), default=0)
+    col_width = max(len(strip_ansi(p1_out)), max_board_width) + 5
+
+    def pad_line(line: str, width: int):
+        visible_len = len(strip_ansi(line))
+        padding_needed = max(0, width - visible_len)
+        return line + (" " * padding_needed)
+    
+    out = f"{p1_out:<{col_width}}     {p2_out}\n"
+    
+    for i in range(len(p1_body)):
+        left_line = pad_line(p1_body[i], col_width)
+        out += f"{left_line}{p2_body[i]}\n"
+
+    output(out)
 
     if _pass:
         prompt_to_continue()
