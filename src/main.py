@@ -56,11 +56,11 @@ def run():
             stat_tracker.record_game(
                 winner_difficult=result.attacker.difficulty,
                 loser_difficulty=result.defender.difficulty,
-                total_turns=result.turnNumber
+                total_turns=result.turnNumber,
             )
 
             break
-    
+
     stat_tracker.display_summary()
 
 
