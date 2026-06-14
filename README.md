@@ -16,22 +16,34 @@ currently.
 
 
 ```text
-Currently turn: 73 with player (1) Admiral Rozelle Regan of Proberta being targeted
-Shot at (6,6) was a hit
-DESTROYER has been sunk!
-Player - (2) Admiral Antonina Egor of Flovilla Board     Player - (1) Admiral Rozelle Regan of Proberta Board
-   0 1 2 3 4 5 6 7 8 9                                      0 1 2 3 4 5 6 7 8 9
-                                                         
-0 |. . + . . . . . . .                                   0 |. . . . + . . . + . 
-1 |. + . + . . . + . .                                   1 |+ . + . . + . + . + 
-2 |+ . . . . . . . . .                                   2 |B B B B . . . . . . 
-3 |. . . . . . . . . +                                   3 |+ . . + . . . . . + 
-4 |. . + . . . . . . +                                   4 |. + . . . . . . . . 
-5 |. . . . . D . . + B                                   5 |. . + . P C . . . . 
-6 |+ . + . + D + . + B                                   6 |. . . + P C D . . . 
-7 |. . . + + D + . + B                                   7 |. . . . + C D + . . 
-8 |. . + + + + . . + B                                   8 |. . . . + C D S S S 
-9 |. + C C C C C . . .                                   9 |. . . . + C + + . + 
+Currently turn: 113 with player (1) Admiral Pierette Ezequiel of Foxcroft being targeted
+Shot at (6,8) was a hit
+CARRIER has been sunk!
+Player - (2) Admiral Cybill Massimo of Ouray Board     Player - (1) Admiral Pierette Ezequiel of Foxcroft Board
+   0 1 2 3 4 5 6 7 8 9                                    0 1 2 3 4 5 6 7 8 9
+0 |+ . + + D D D . . +                                 0 |+ . . + . + . S S S 
+1 |. + + . + + . . + B                                 1 |+ . . + . + . . + + 
+2 |+ P . . + . . + + B                                 2 |. + + . . . . + . . 
+3 |+ P + + . + + . + B                                 3 |+ . . . P P . + . + 
+4 |. + + . . + . . + B                                 4 |. + . . + + + + + . 
+5 |. + . . + . . + . +                                 5 |+ + + . + D D D . + 
+6 |+ . . + . . + . . +                                 6 |+ B + . . . + . + . 
+7 |. . + . . + . . . .                                 7 |+ B + + + . + . . + 
+8 |+ . + . + + + + . .                                 8 |. B C C C C C + . . 
+9 |+ . . C C C C C + +                                 9 |. B + + + + . . . . 
+
+(2) Admiral Cybill Massimo of Ouray has won the game!
+   0 1 2 3 4 5 6 7 8 9
+0 |+ . . + . + . S S S 
+1 |+ . . + . + . . + + 
+2 |. + + . . . . + . . 
+3 |+ . . . P P . + . + 
+4 |. + . . + + + + + . 
+5 |+ + + . + D D D . + 
+6 |+ B + . . . + . + . 
+7 |+ B + + + . + . . + 
+8 |. B C C C C C + . . 
+9 |. B + + + + . . . . 
 ```
 
 # To Setup
