@@ -79,6 +79,10 @@ class Output(StrEnum):
     OVERLAP = f"{Colors.RED}Overlap Detected!{Colors.END} Position ({{}}, {{}}) is already occupied by {{}}"
     BOARD_PRINTPUT_HEADER_1 = f"{Colors.GREEN}Player - {{}} Board{Colors.END}"
     BOARD_PRINTPUT_HEADER_2 = f"{Colors.YELLOW}Player - {{}} Board{Colors.END}"
+    STATS_FILLER = "=" * 50
+    STATS_HEADER_TITLE = f"{'BATTLESHIP DIFFICULTY PERFORMANCE STATS':^55}"
+    STATS_HEADER_SUB = f"{'Difficulty':<12} | {'Win Rate':<10} | {'W/L':<6} | {'Avg W-Turn':<10} | {'Avg L-Turn'}"
+    STATS_OUTPUT = "{} | {} | {} | {} | {}"
 
 
 class State(Enum):

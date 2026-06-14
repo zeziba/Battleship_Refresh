@@ -6,10 +6,13 @@ from .Board import Board
 import src.UI as UI
 import src.name_generator as Names
 from src import config as _config
+from .Stats import GameStatTracker
 
 from .Logger import get_logger
 
 logger = get_logger(__name__)
+
+stat_tracker = GameStatTracker()
 
 
 def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
@@ -36,8 +39,7 @@ def run():
     print("Welcome to Battleship")
     logger.debug("Starting Game")
 
-    game = build_game(Difficulty.MEDIUM, Difficulty.EASY)
-
+    game = build_game(Difficulty.EASY, Difficulty.MEDIUM)
     for result in game.take_turns():
         UI.print_turn_result(result)
         UI.print_boards(
@@ -50,7 +52,16 @@ def run():
 
         if result.game_over:
             UI.print_game_over(result.attacker.name, result.defender.board)
+
+            stat_tracker.record_game(
+                winner_difficult=result.attacker.difficulty,
+                loser_difficulty=result.defender.difficulty,
+                total_turns=result.turnNumber
+            )
+
             break
+    
+    stat_tracker.display_summary()
 
 
 if __name__ == "__main__":
