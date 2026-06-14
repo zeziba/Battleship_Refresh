@@ -73,7 +73,7 @@ class Output(StrEnum):
     EXAMPLE_1 = "\nExample:\n\t1 3\n\tA1\n\t1:3"
     EXAMPLE_2 = "\nExample:\n<h|v>"
     PRE_SHOT = f"Preparing to take a shot at {Colors.YELLOW}{{}}{Colors.END}"
-    SHOT_AT = f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} hit {Colors.LIGHT_CYAN}{{}}{Colors.END}"
+    SHOT_AT = f"Shot at {Colors.GREEN}({{}},{{}}){Colors.END} was a {Colors.LIGHT_CYAN}{{}}{Colors.END}"
     INVALID_COORD = "Coordinates are not valid, attempt again"
     CURRENT_TURN = (
         f"Currently turn: {Colors.YELLOW}{{}}{Colors.END} with player {Colors.GREEN}{{}}{Colors.END} being targeted"
@@ -83,6 +83,8 @@ class Output(StrEnum):
     AI_SHOT_TAKEN = f"{Colors.GREEN}AI{Colors.END} fired at {Colors.LIGHT_WHITE}({{}}, {{}}){Colors.END}"
     SUNK_SHIP = f"{Colors.LIGHT_PURPLE}{{}}{Colors.END} has been sunk!"
     OVERLAP = f"{Colors.RED}Overlap Detected!{Colors.END} Position ({{}}, {{}}) is already occupied by {{}}"
+    BOARD_PRINTPUT_HEADER_1 = f"{Colors.GREEN}Player - {{}} Board{Colors.END}"
+    BOARD_PRINTPUT_HEADER_2 = f"{Colors.YELLOW}Player - {{}} Board{Colors.END}"
 
 
 class State(Enum):
