@@ -48,7 +48,7 @@ class Game:
         for turn, attacker, defender in self._get_turn:
             shot_x, shot_y, is_hit, sunk_ship = attacker.take_turn(defender)
 
-            game_over = defender.fleet.is_defeated()
+            game_over = defender.fleet.all_sunk
 
             yield TurnResult(
                 turnNumber=turn,

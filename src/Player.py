@@ -28,17 +28,17 @@ class Difficulty(StrEnum):
 logger = get_logger(__name__)
 
 
-def create_player(name: str, difficulty: Difficulty, width: int, height: int, fleet_comp: dict[str, int]):
+def create_player(name: str, difficulty: Difficulty, board: Board.Board, fleet_comp: dict[str, int]):
     ai_brain = None
     if difficulty == Difficulty.EASY:
-        ai_brain = AI.Random()
+        ai_brain = AI.Random(board.width, board.height)
     elif difficulty == Difficulty.MEDIUM:
-        ai_brain = AI.HuntAndTargetAIAdv()
+        ai_brain = AI.HuntAndTargetAIAdv(board.width, board.height)
     # elif p.difficulty == Difficulty.HARD:
     #     p._ai_brain = AI.ProbabilityAI()
 
     return Player(
-        name, difficulty, Board.Board(width=width, height=height), Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain
+        name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain
     )
 
 
@@ -178,11 +178,15 @@ class Player:
         return self.board.get(x, y).hit
 
     def process_shot_result(self, x: int, y: int, tile: Tile.Tile):
-        if self._ai_brain and self.is_ai and tile.has:
+        if self._ai_brain is not None and self.is_ai:
             logger.debug(f"Processing shot at ({x}, {y}) on {self.name}'s tile")
-            if tile.has.is_sunk:
-                self._ai_brain.ships_left.pop(tile.has.name, None)
-            self._ai_brain.register_hit(x, y, tile.has.is_sunk)
+            is_hit = False
+            _ship = None
+            if tile.has:
+                is_hit = tile.has.contains(x, y)
+                if tile.has.is_sunk:
+                    _ship = tile.has
+            self._ai_brain.register_result((x, y), is_hit, _ship)
 
     def choose_target(self) -> tuple[int, int]:
         logger.debug(f"Starting target acquisition for {self.name}")
@@ -278,6 +282,8 @@ class Player:
     def take_turn(self, opp: Player) -> tuple[int, int, bool, str]:
         x, y = self.choose_target()
         tile: Tile.Tile = opp.take_at_self_shot(x, y)
+        
+        self.process_shot_result(x, y, tile)
 
         if tile.has and tile.hit:
             return x, y, tile.hit, tile.has.name

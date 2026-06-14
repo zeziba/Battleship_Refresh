@@ -18,13 +18,13 @@ def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
     # Setup player 1
     p1_board = Board(_config.board_width, _config.board_height)
     p1_name = f"(1) Admiral {names.create_random_name()}"
-    p1 = create_player(p1_name, p1_difficulty, _config.board_width, _config.board_width, _config.fleet_composition)
+    p1 = create_player(p1_name, p1_difficulty, p1_board, _config.fleet_composition)
     p1.generate_fleet(_config.fleet_composition)
 
     # Setup player 2
     p2_board = Board(_config.board_width, _config.board_height)
     p2_name = f"(2) Admiral {names.create_random_name()}"
-    p2 = create_player(p2_name, p2_difficulty, _config.board_width, _config.board_width, _config.fleet_composition)
+    p2 = create_player(p2_name, p2_difficulty, p2_board, _config.fleet_composition)
     p2.generate_fleet(_config.fleet_composition)
 
     player_dict = {p1_name: p1, p2_name: p2}
@@ -36,7 +36,7 @@ def run():
     print("Welcome to Battleship")
     logger.debug("Starting Game")
 
-    game = build_game(Difficulty.MEDIUM, Difficulty.MEDIUM)
+    game = build_game(Difficulty.MEDIUM, Difficulty.EASY)
 
     for result in game.take_turns():
         UI.print_turn_result(result)
@@ -45,7 +45,7 @@ def run():
             result.attacker.board,
             result.defender.name,
             result.defender.board,
-            result.turnNumber % 50 == 0,
+            # result.turnNumber % 50 == 0,
         )
 
         if result.game_over:

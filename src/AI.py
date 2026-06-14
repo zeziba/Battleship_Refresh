@@ -1,75 +1,95 @@
+from __future__ import annotations
 import random
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Optional
 
 from . import GameRules
 
+if TYPE_CHECKING:
+    from .Ship import Ship
+
 
 class BattleShipAI(ABC):
-    shots_taken: set
-    potential_shots: list
-    targets: list
-    board_size: int
-    ships_left: dict[str, int]
+    shots_taken: set = set()
 
     @abstractmethod
     def get_shot(self) -> tuple[int, int]:
         pass
 
     @abstractmethod
-    def register_hit(self, x: int, y: int, has_sunk: bool = False) -> None:
+    def register_result(self, shot: tuple[int, int], has_hit: bool, sunk_ship: Optional[Ship] = None) -> None:
         pass
 
 
 class Random(BattleShipAI):
 
-    def __init__(self):
-        self.shots_taken = set()
-        self.potential_shots = []
-        self.targets = []
-        self.board_size = GameRules.SIZE
-        self.ships_left = GameRules.FLEET.copy()
-        self.left_overs = []
+    def __init__(self, width: int, height: int):
+        self.board_width = width
+        self.board_height = height
+        self.shots_taken: set = set()
+        self.priority_targets: list[tuple[int, int]] = []
+        self.potential_shots: list[tuple[int, int]] = []
+        self.unsunk_hits: list[tuple[int, int]] = []
 
-        for x in range(GameRules.SIZE):
-            for y in range(GameRules.SIZE):
-                if (x + y) % 2 == 0:
-                    self.potential_shots.append((x, y))
-                else:
-                    self.left_overs.append((x, y))
+        for x in range(self.board_width):
+            for y in range(self.board_height):
+                self.potential_shots.append((x, y))
 
     def get_shot(self) -> tuple[int, int]:
-        if self.potential_shots:
-            x, y = random.choice(self.potential_shots)
-            self.potential_shots.remove((x, y))
-            self.shots_taken.add((x, y))
-            return x, y
+        if self.priority_targets:
+            shot = self.priority_targets.pop(random.randint(0, len(self.priority_targets) - 1))
+            if shot in self.potential_shots:
+                self.potential_shots.remove(shot)
+            self.shots_taken.add(shot)
+            return shot
+        
+        if not self.potential_shots:
+            raise IndexError("No more potential shots on the board")
 
-        x, y = random.choice(self.left_overs)
-        self.left_overs.remove((x, y))
-        self.shots_taken.add((x, y))
-        return x, y
+        shot = random.choice(self.potential_shots)
+        self.potential_shots.remove(shot)
+        self.shots_taken.add(shot)
+        return shot
 
-    def register_hit(self, x: int, y: int, has_sunk: bool = False):
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+    def register_result(self, shot: tuple[int, int], has_hit: bool, sunk_ship: Optional[Ship] = None):
+        if has_hit:
+            self.unsunk_hits.append(shot)
+            if sunk_ship:
+                self.unsunk_hits = [
+                    pos for pos in self.unsunk_hits
+                    if not sunk_ship.contains(pos[0], pos[1])
+                ]
+                self._rebuild_priority_targets()
+            else:
+                self._generate_targets_around(shot)
+
+    def _rebuild_priority_targets(self):
+        self.priority_targets.clear()
+        for hit in self.unsunk_hits:
+            self._generate_targets_around(hit)
+
+    def _generate_targets_around(self, shot: tuple[int, int]):
+        x, y = shot
+        for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
             nx, ny = x + dx, y + dy
-            if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
-                if (nx, ny) not in self.shots_taken:
-                    self.targets.append((nx, ny))
+            if 0 <= nx < self.board_width and 0 <= ny < self.board_height:
+                potential_shot = (nx, ny)
+                if (potential_shot not in self.shots_taken) and (potential_shot not in self.priority_targets):
+                    self.priority_targets.append(potential_shot)
 
 
 class HuntAndTargetAIAdv(BattleShipAI):
 
-    def __init__(self):
-        self.shots_taken = set()
-        self.potential_shots = []
-        self.targets = []
-        self.board_size = GameRules.SIZE
-        self.ships_left = GameRules.FLEET.copy()
+    def __init__(self, width: int, height: int):
+        super().__init__()
+        self.board_width = width
+        self.board_height = height
 
-        for x in range(GameRules.SIZE):
-            for y in range(GameRules.SIZE):
-                if (x + y) % 2 == 0:
-                    self.potential_shots.append((x, y))
+        self.unsunk_hits: list[tuple[int, int]] = []
+        self.fired_shots: list[tuple[int, int]] = []
+        self.potential_targets: list[tuple[int, int]] = []
+
+        self.ships_left = GameRules.FLEET.copy()
 
     @property
     def smallest_ship_left(self):
@@ -77,45 +97,69 @@ class HuntAndTargetAIAdv(BattleShipAI):
             return min(self.ships_left.values())
         return 2
 
-    def rebuild_potential_shots(self):
-        smallest = self.smallest_ship_left
-        for x in range(GameRules.SIZE):
-            for y in range(GameRules.SIZE):
-                if (x + y) % smallest != 0:
-                    continue
-                if (x, y) in self.shots_taken:
-                    continue
-                self.potential_shots.append((x, y))
-
     def get_shot(self) -> tuple[int, int]:
-        while self.targets:
-            x, y = self.targets.pop()
-            if (x, y) in self.potential_shots:
-                self.potential_shots.remove((x, y))
-            self.shots_taken.add((x, y))
-            return x, y
+        while self.potential_targets:
+            shot = self.potential_targets.pop(0)
+            if shot not in self.shots_taken:
+                self.shots_taken.add(shot)
+                return shot
 
-        if self.potential_shots:
-            x, y = random.choice(self.potential_shots)
-            self.potential_shots.remove((x, y))
-            self.shots_taken.add((x, y))
-            return x, y
+        if self.unsunk_hits:
+            self._rebuild_potential_shots()
+            if self.potential_targets:
+                shot = self.potential_targets.pop()
+                self.shots_taken.add(shot)
+                return shot
 
-        while True:
-            x = random.randint(0, self.board_size - 1)
-            y = random.randint(0, self.board_size - 1)
-            if (x, y) not in self.shots_taken:
-                self.shots_taken.add((x, y))
-                return (x, y)
+        shot = self._get_hunt_shot()
+        self.shots_taken.add(shot)
+        return shot
 
-    def register_hit(self, x: int, y: int, has_sunk: bool = False):
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+    def register_result(self, shot: tuple[int, int], has_hit: bool, sunk_ship: Optional[Ship] = None):
+        if has_hit:
+            self.unsunk_hits.append(shot)
+            if sunk_ship:
+                if sunk_ship.name in self.ships_left:
+                    self.ships_left.pop(sunk_ship.name)
+                self.unsunk_hits = [
+                    pos for pos in self.unsunk_hits
+                    if not sunk_ship.contains(pos[0], pos[1])
+                ]
+            else:
+                self._generate_targets_around(shot)
+
+    def _generate_targets_around(self, shot: tuple[int, int]):
+        x, y = shot
+        for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
             nx, ny = x + dx, y + dy
-            if 0 <= nx < self.board_size and 0 <= ny < self.board_size:
-                if (nx, ny) not in self.shots_taken:
-                    self.targets.append((nx, ny))
-        if has_sunk:
-            self.rebuild_potential_shots()
+            if 0 <= nx < self.board_width and 0 <= ny < self.board_height:
+                potential_shot = (nx, ny)
+                if (potential_shot not in self.fired_shots) and (potential_shot not in self.potential_targets):
+                    self.potential_targets.append(potential_shot)
+
+    def _rebuild_potential_shots(self):
+        self.potential_targets.clear()
+        for hit in self.unsunk_hits:
+            self._generate_targets_around(hit)
+
+    def _get_hunt_shot(self) -> tuple[int, int]:
+        left_over_shots = [
+            (x, y)
+            for x in range(self.board_width)
+            for y in range(self.board_height)
+            if (x, y) not in self.shots_taken
+            if (x + y) % self.smallest_ship_left == 0
+        ]
+
+        if not left_over_shots:
+            left_over_shots = [
+                (x, y)
+                for x in range(self.board_width)
+                for y in range(self.board_height)
+                if (x, y) not in self.shots_taken
+            ]
+
+        return random.choice(left_over_shots)
 
 
 class ProbabilityAI(BattleShipAI):
