@@ -54,7 +54,7 @@ def run():
             UI.print_game_over(result.attacker.name, result.defender.board)
 
             stat_tracker.record_game(
-                winner_difficult=result.attacker.difficulty,
+                winner_difficulty=result.attacker.difficulty,
                 loser_difficulty=result.defender.difficulty,
                 total_turns=result.turnNumber,
             )
