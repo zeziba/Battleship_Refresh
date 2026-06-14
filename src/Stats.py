@@ -1,8 +1,11 @@
+import sqlite3
 from dataclasses import dataclass, field
 from math import trunc
 from .Player import Difficulty
 from .UI import output
 from .GameRules import Output
+
+DB_FILE = "battleship_stats.db"
 
 
 @dataclass
@@ -32,15 +35,36 @@ class GameStatTracker:
         default_factory=lambda: {diff.value: DifficultyStats() for diff in Difficulty}
     )
 
-    def record_game(self, winner_difficult: Difficulty, loser_difficulty: Difficulty, total_turns: int):
-        winner_stats = self.by_difficulty[winner_difficult.value]
-        loser_stats = self.by_difficulty[loser_difficulty.value]
+    def __post_init__(self):
+        self._init_db()
 
-        winner_stats.wins += 1
-        winner_stats.total_turns_won += total_turns
+    def _init_db(self):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS game_history (
+                           id INTEGER PRIMARY KEY AUTOINCREMENT,
+                           winner_difficulty TEXT NOT NULL,
+                           loser_difficulty TEXT NOT NULL,
+                           total_turns INTEGER NOT NULL,
+                           timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+                """)
 
-        loser_stats.losses += 1
-        loser_stats.total_turns_lost += total_turns
+    def _get_connection(self):
+        return sqlite3.connect(DB_FILE)
+
+    def record_game(self, winner_difficulty: Difficulty, loser_difficulty: Difficulty, total_turns: int):
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO game_history (winner_difficulty, loser_difficulty, total_turns)
+                VALUES (?, ?, ?)
+                """,
+                (winner_difficulty.value, loser_difficulty.value, total_turns),
+            )
+            conn.commit()
 
     def display_summary(self):
         output(Output.STATS_FILLER)
@@ -49,15 +73,33 @@ class GameStatTracker:
         output(Output.STATS_HEADER_SUB)
         output(Output.STATS_FILLER)
 
-        for diff, stats in self.by_difficulty.items():
-            total_games = stats.losses + stats.wins
+        for difficulty in Difficulty:
+            diff = difficulty.value
+            with self._get_connection() as conn:
+                cursor = conn.cursor()
+
+                cursor.execute(
+                    "SELECT COUNT(*), AVG(total_turns) FROM game_history WHERE winner_difficulty = ?", (diff,)
+                )
+                wins, avg_w_raw = cursor.fetchone()
+                wins = wins or 0
+
+                cursor.execute(
+                    "SELECT COUNT(*), AVG(total_turns) FROM game_history WHERE loser_difficulty = ?", (diff,)
+                )
+                losses, avg_l_raw = cursor.fetchone()
+                losses = losses or 0
+
+            total_games = wins + losses
             if total_games == 0:
                 continue
 
-            win_rate_str = f"{stats.win_rate:.1f}%"
-            wl_str = f"{stats.wins}/{stats.losses}"
-            avg_w = f"{stats.avg_turns_to_win:.1f}" if stats.wins > 0 else "N/A"
-            avg_l = f"{stats.avg_turns_to_lose:.1f}" if stats.losses > 0 else "N/A"
+            win_rate = trunc((wins / total_games) * 1e3) / 1e1 if total_games > 0 else 0
+
+            win_rate_str = f"{win_rate:.1f}%"
+            wl_str = f"{wins}/{losses}"
+            avg_w = f"{avg_w_raw:.1f}" if wins > 0 else "N/A"
+            avg_l = f"{avg_l_raw:.1f}" if losses > 0 else "N/A"
 
             output(
                 Output.STATS_OUTPUT.format(
