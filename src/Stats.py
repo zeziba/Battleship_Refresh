@@ -33,7 +33,7 @@ def display_database_summary(db_path: str = DB_FILE):
             SELECT 
                 p.difficulty,
                 COUNT(s.turn_sequence) AS total_shots,
-                COUNT(CASE WHEN s.shot_outcome = 1 THEN 1 END) AS total_hits
+                SUM(CASE WHEN s.shot_outcome = 'H' THEN 1 ELSE 0 END) AS total_hits
             FROM players p
             JOIN shot_logs s ON p.player_id = s.player_id
             GROUP BY p.difficulty
@@ -210,7 +210,8 @@ class GameStatTracker:
 
     def batch_write_shots(self, game_id: str, global_timeline: list[ChronologicalShot]):
         shot_rows = [
-            (game_id, s.player_id, s.turn_sequence, s.x, s.y, s.outcome, s.sunk_ship_name) for s in global_timeline
+            (game_id, s.player_id, s.turn_sequence, s.x, s.y, "H" if s.outcome else "M", s.sunk_ship_name)
+            for s in global_timeline
         ]
         with self._get_connection() as conn:
             cursor = conn.cursor()
