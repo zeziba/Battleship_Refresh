@@ -285,7 +285,5 @@ class Player:
         self.process_shot_result(x, y, tile)
 
         if tile.has and tile.hit:
-            return x, y, tile.hit, tile.has.name
-        elif tile.hit:
-            return x, y, tile.hit, ""
+            return x, y, True, tile.has.name
         return x, y, False, ""
