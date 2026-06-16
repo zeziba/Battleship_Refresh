@@ -8,6 +8,7 @@ from . import config
 
 if TYPE_CHECKING:
     from .Game import Game
+    from .Board import Board
 
 
 @dataclass
@@ -167,6 +168,9 @@ class GameFrame(ctk.CTkFrame):
     def attack_board_at(self, x: int, y: int):
         pass
 
+    def update_friendly_board(self, board_state: Board):
+        pass
+
 
 class StatsFrame(ctk.CTkFrame):
     def __init__(self, master: ctk.CTkFrame, app_controller: BattleShipApp):
@@ -191,6 +195,12 @@ class OptionFrame(ctk.CTkFrame):
     def __init__(self, master: ctk.CTkFrame, app_controller: BattleShipApp):
         super().__init__(master)
         self.app_controller = app_controller
+
+        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Options")
+        title.pack(pady=10)
+
+        btn_back: ctk.CTkButton = ctk.CTkButton(self, text="Back to Main Menu", command=app_controller.show_menu)
+        btn_back.pack(pady=20)
 
 
 class BattleShipApp(ctk.CTk):
