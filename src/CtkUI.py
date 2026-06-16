@@ -1,5 +1,6 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, Tuple, Type, Optional, Any
+from typing import TYPE_CHECKING, Callable, Dict, Tuple, Type, Optional, Any
+from enum import Enum, auto
 
 import customtkinter as ctk
 from dataclasses import dataclass
@@ -101,15 +102,53 @@ class MainMenuFrame(ctk.CTkFrame):
             btn.pack(pady=10)
 
 
+class GameUIState(Enum):
+    PLACEMENT = auto()
+    ATTACKER = auto()
+    DEFENDER = auto()
+    GAME_OVER = auto()
+
+
 class GameFrame(ctk.CTkFrame):
     def __init__(self, master: ctk.CTkFrame, app_controller: BattleShipApp):
         super().__init__(master, fg_color="transparent")
         self.app_controller = app_controller
         self.ui_cfg = app_controller.ui_cfg
+        self.players = {"attacker": 0, "defender": 0}
 
+        # State Machine
+        self.current_state: GameUIState = GameUIState.PLACEMENT
+
+        # Ship placement data
+        self.c_ship_orientation: str = "H"  # | "V"
+        self.c_ship_index: int = 0
+
+        self._init_layout()
+
+    def _init_layout(self):
         # Status
-        status_label: ctk.CTkLabel = ctk.CTkLabel(self, text="Awaiting Orders")
-        status_label.pack(pady=10)
+        self.status_label: ctk.CTkLabel = ctk.CTkLabel(self, text="Game")
+        self.status_label.pack(pady=10)
+
+        # Controls
+        self.control_container: ctk.CTkFrame = ctk.CTkFrame(self)
+        self.control_container.pack(pady=5, fill="x")
+
+        self.btn_orientation: ctk.CTkButton = ctk.CTkButton(
+            self.control_container,
+            text=f"Orientation: {self.c_ship_orientation} (Press R to flip)",
+            command=self.toggle_orientation,
+        )
+        self.btn_orientation.pack(padx=10, side="left")
+
+        btn_back: ctk.CTkButton = ctk.CTkButton(
+            self.control_container,
+            text="Abort Game",
+            fg_color=self.ui_cfg.color_danger_btn,
+            hover_color=self.ui_cfg.color_danger_hover,
+            command=self.app_controller.show_menu,
+        )
+        btn_back.pack(pady=20, side="right")
 
         # Board
         self.board_frame: ctk.CTkFrame = ctk.CTkFrame(self, fg_color="transparent")
@@ -119,17 +158,23 @@ class GameFrame(ctk.CTkFrame):
         self.p1_buttons: dict[tuple[int, int], ctk.CTkButton] = {}
         self.p2_buttons: dict[tuple[int, int], ctk.CTkButton] = {}
 
-        self._build_board(self.board_frame, "Friendly Fleet", self.p1_buttons, side="left", interactive=False)
-        self._build_board(self.board_frame, "Targeting Radar", self.p2_buttons, side="right", interactive=False)
-
-        btn_back: ctk.CTkButton = ctk.CTkButton(
-            self,
-            text="Abort Game",
-            fg_color=self.ui_cfg.color_danger_btn,
-            hover_color=self.ui_cfg.color_danger_hover,
-            command=self.app_controller.show_menu,
+        self._build_board(
+            self.board_frame,
+            "Attacker",
+            self.p1_buttons,
+            side="left",
+            interactive=True,
+            command=self.handle_placement_click,
         )
-        btn_back.pack(pady=20)
+
+        self.master.bind("<r>", lambda event: self.toggle_orientation)
+        self.master.bind("<R>", lambda event: self.toggle_orientation)
+
+    def change_state(self, next: GameUIState):
+        self.current_state = next
+
+    def update_state(self):
+        pass
 
     def _build_board(
         self,
@@ -138,16 +183,31 @@ class GameFrame(ctk.CTkFrame):
         button_dict: Dict[Tuple[int, int], ctk.CTkButton],
         side: str,
         interactive: bool,
+        command: Callable[[int, int, dict[tuple[int, int], ctk.CTkButton]], None] | None = None,
     ):
+        if command:
+            _cmd = command
+        else:
+            _cmd: Callable[[int, int, dict[tuple[int, int], ctk.CTkButton]], None] = (
+                lambda x, y, button_dict: self.handle_attacker_click(x, y, button_dict)
+            )
+        # Remove old buttons
+        for btn_set in button_dict.values():
+            btn_set.destroy()
+
         board_frame = ctk.CTkFrame(parent)
-        board_frame.grid(pady=(10, 5), columnspan=10, row=0, column=0)
+        col_position = 0 if side.lower() == "left" else 1
+        board_frame.grid(row=0, column=col_position, pady=(10, 5), padx=20)
 
         lbl: ctk.CTkLabel = ctk.CTkLabel(board_frame, text=title, font=self.ui_cfg.font_board_title)
         lbl.grid(row=0, column=0, columnspan=10, pady=(10, 5))
 
+        self.board_container: ctk.CTkFrame = ctk.CTkFrame(self)
+        self.board_container.pack(pady=20, expand=True, fill="both")
+
         for x in range(config.board_width):
             for y in range(config.board_height):
-                cmd = (lambda cx=x, cy=y: self.attack_board_at(cx, cy)) if interactive else None
+                cmd = (lambda cx=x, cy=y: _cmd(cx, cy, button_dict)) if interactive else None
 
                 default_color: str = self.ui_cfg.color_ocean if not interactive else self.ui_cfg.color_disabled
                 hover_color: str = self.ui_cfg.color_hover if not interactive else self.ui_cfg.color_ocean
@@ -165,10 +225,33 @@ class GameFrame(ctk.CTkFrame):
                 btn.grid(row=y + 1, column=x, padx=2, pady=2)
                 button_dict[(x, y)] = btn
 
-    def attack_board_at(self, x: int, y: int):
+    def toggle_orientation(self):
+        if self.current_state != GameUIState.PLACEMENT:
+            return
+
+    def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
+        if not self.status_label:
+            return
+        self.status_label.configure(text=f"Clicked ({x}, {y})", fg_color="transparent")
+
+        btn = button_dict[(x, y)]
+
+        fg_color = btn.cget("fg_color")
+        hover_color = btn.cget("hover_color")
+
+        btn.configure(
+            fg_color=self.ui_cfg.color_ocean if fg_color == self.ui_cfg.color_disabled else self.ui_cfg.color_disabled,
+            hover_color=(
+                self.ui_cfg.color_hover
+                if hover_color == self.ui_cfg.color_danger_hover
+                else self.ui_cfg.color_danger_hover
+            ),
+        )
+
+    def handle_attacker_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         pass
 
-    def update_friendly_board(self, board_state: Board):
+    def handle_defender_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         pass
 
 
