@@ -54,7 +54,7 @@ Battleship_Refresh-GUI/
 ```Bash
 Bash
 
-git clone https://github.com/yourusername/Battleship_Refresh-GUI.git
+git clone https://github.com/zeziba/Battleship_Refresh.git
 cd Battleship_Refresh-GUI
 ```
 
