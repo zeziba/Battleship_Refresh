@@ -3,11 +3,11 @@
 Welcome to Battleship Refresh, a modernized desktop implementation of the classic naval combat game. Built with Python 3 and a slick, modern graphical user interface powered by CustomTkinter, this version features robust AI opponents, fully tracked gameplay statistics, customizable rules, and an automated flavor-text name generator for an immersive experience.
 ## Features
 
--Modern UI/UX: Built using CustomTkinter for a clean, responsive, dark-mode-native desktop interface.
--Intelligent AI: Play against a dedicated automated opponent with optimized target-seeking logic.
--Dynamic Component System: Fully modular board tracking, ship damage states, and fleet allocations.
--Procedural Flavor: Integrated identity generation utilizing custom localized text files for first names, middle names, and geographic deployment origins.
--Extensive Configuration & Validation: Rigid rule handling and a comprehensive logging ecosystem to audit turns, hits, and misses.
+- Modern UI/UX: Built using CustomTkinter for a clean, responsive, dark-mode-native desktop interface.
+- Intelligent AI: Play against a dedicated automated opponent with optimized target-seeking logic.
+- Dynamic Component System: Fully modular board tracking, ship damage states, and fleet allocations.
+- Procedural Flavor: Integrated identity generation utilizing custom localized text files for first names, middle names, and geographic deployment origins.
+- Extensive Configuration & Validation: Rigid rule handling and a comprehensive logging ecosystem to audit turns, hits, and misses.
 
 ## Repository Architecture
 
