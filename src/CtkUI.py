@@ -51,41 +51,17 @@ class UIConfig:
     color_danger_hover: str = "#5C0000"
 
 
-def show_bottom_left_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500):
-    toast = ctk.CTkToplevel(parent)
-    toast.overrideredirect(True)
-    toast.attributes("-topmost", True)
+def show_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500, anchor: str = "sw"):
+    toast = ctk.CTkFrame(parent, fg_color="#2b2b2b", corner_radius=8, border_width=1, border_color="#3f3f3f")
 
-    screen_width = toast.winfo_screenmmwidth()
-    screen_height = toast.winfo_screenmmheight()
+    parent.update_idletasks()
+    max_allowed_width = int(parent.winfo_width() * 0.30)
 
-    max_width = int(screen_width * 0.30)
-    max_height = int(screen_height * 0.10)
+    label = ctk.CTkLabel(toast, text=message, text_color="white", wraplength=max_allowed_width - 20, justify="left")
+    label.pack(padx=12, pady=8, expand=True, fill="both")
 
-    label = ctk.CTkLabel(
-        toast,
-        text=message,
-        corner_radius=UIConfig.tile_corner_radius,
-        fg_color="#2b2b2b",
-        text_color="white",
-        padx=15,
-        pady=10,
-        wraplength=max_width - 30,
-    )
-    label.pack(expand=True, fill="both")
+    toast.place(relx=0.02, rely=0.98, relwidth=0.30, relheight=0.10, anchor=anchor)
 
-    toast.update_idletasks()
-
-    actual_width = min(label.winfo_reqwidth(), max_width)
-    actial_height = min(label.winfo_reqheight(), max_height)
-
-    x_offset = 20
-    y_offset = 20
-
-    x = x_offset
-    y = screen_height - actial_height - y_offset
-
-    toast.geometry(f"{actual_width}x{actial_height}+{x}+{y}")
     toast.after(duration, toast.destroy)
 
 
@@ -284,7 +260,7 @@ class GameFrame(ctk.CTkFrame):
         if not self.status_label:
             return
         # self.status_label.configure(text=f"Clicked ({x}, {y})", fg_color="transparent")
-        show_bottom_left_toast(self, f"Clicked ({x}, {y})")
+        show_toast(self, f"Clicked ({x}, {y})")
 
         btn = button_dict[(x, y)]
 
