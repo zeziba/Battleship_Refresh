@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys
 import uuid
+import argparse
 
 from .Game import Game
 from .Player import Difficulty, create_player
@@ -10,6 +11,7 @@ import src.UI as UI
 import src.name_generator as Names
 from src import config as _config
 from .Stats import GameStatTracker, MatchTelemetry, ChronologicalShot, DB_FILE, display_database_summary
+from . import CtkUI
 
 from typing import TYPE_CHECKING
 
@@ -55,7 +57,7 @@ def build_player_telemetry(name: str, player: Player):
     return tel
 
 
-def run():
+def _run():
     UI.output("Welcome to Battleship")
     tracker = GameStatTracker(DB_FILE)
     current_game_id = str(uuid.uuid4())[:8]
@@ -109,6 +111,52 @@ def run():
             break
 
     display_database_summary(DB_FILE)
+
+
+def _run_gui():
+    tracker = GameStatTracker(DB_FILE)
+    app_controller = CtkUI.BattleShipApp(
+        Game(),
+        create_player,
+        lambda width, height: Board(width, height),
+        Names.NameGenerator(),
+        [Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HUMAN],
+        tracker,
+    )
+    app_controller.mainloop()
+
+    """
+    names = Names.NameGenerator()
+
+    # Setup player 1
+    p1_board = Board(_config.board_width, _config.board_height)
+    p1_name = f"(1) Admiral {names.create_random_name()}"
+    p1 = create_player(p1_name, p1_difficulty, p1_board, _config.fleet_composition)
+    p1.generate_fleet(_config.fleet_composition)
+
+    # Setup player 2
+    p2_board = Board(_config.board_width, _config.board_height)
+    p2_name = f"(2) Admiral {names.create_random_name()}"
+    p2 = create_player(p2_name, p2_difficulty, p2_board, _config.fleet_composition)
+    p2.generate_fleet(_config.fleet_composition)
+
+    player_dict = {p1_name: p1, p2_name: p2}
+
+    return Game(players_dict=player_dict)
+    """
+
+
+def run():
+    parser = argparse.ArgumentParser(description="Battleship The Game")
+    parser.add_argument(
+        "--terminal", action="store_true", help="Launch the game in the text terminal instead of the GUI"
+    )
+    args = parser.parse_args()
+
+    if args.terminal:
+        _run()  # Terminal Based
+    else:
+        _run_gui()
 
 
 if __name__ == "__main__":
