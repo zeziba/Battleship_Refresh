@@ -50,9 +50,18 @@ class UIConfig:
     color_danger_btn: str = "#8B0000"  # Red for Exit/Abort buttons
     color_danger_hover: str = "#5C0000"
 
+    color_toast_bg: str = "#2b2b2b"
+    color_toast_border: str = "#3f3f3f"
+
 
 def show_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500, anchor: str = "sw"):
-    toast = ctk.CTkFrame(parent, fg_color="#2b2b2b", corner_radius=8, border_width=1, border_color="#3f3f3f")
+    toast = ctk.CTkFrame(
+        parent,
+        fg_color=UIConfig.color_toast_bg,
+        corner_radius=8,
+        border_width=1,
+        border_color=UIConfig.color_toast_border,
+    )
 
     parent.update_idletasks()
     max_allowed_width = int(parent.winfo_width() * 0.30)
