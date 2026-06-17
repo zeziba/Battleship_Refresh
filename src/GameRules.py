@@ -79,7 +79,7 @@ class Output(StrEnum):
     OVERLAP = f"{Colors.RED}Overlap Detected!{Colors.END} Position ({{}}, {{}}) is already occupied by {{}}"
     BOARD_PRINTPUT_HEADER_1 = f"{Colors.GREEN}Player - {{}} Board{Colors.END}"
     BOARD_PRINTPUT_HEADER_2 = f"{Colors.YELLOW}Player - {{}} Board{Colors.END}"
-    STATS_FILLER = "=" * 50
+    STATS_FILLER = "=" * 119
     STATS_HEADER_TITLE = f"{'BATTLESHIP LIFETIME PERFORMANCE STATS':^55}"
     STATS_HEADER_SUB = f"{'Difficulty':<12} | {'Games':<5} | {'Wins':<4} | {'Losses':<6} | {'Win %':<6} | {'Avg Turn Win':<12} | {'Shot Accuracy':<13}"
     STATS_OUTPUT = "{} | {} | {} | {} | {} | {} | {}"
