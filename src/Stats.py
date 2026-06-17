@@ -14,51 +14,54 @@ def generate_player_id(player_name: str) -> str:
     return hashlib.sha256(player_name.strip().encode("utf-8")).hexdigest()[:16]
 
 
+DISPLAY_QUERY = """
+WITH player_match_stats AS (
+    -- Calculate individual match wins, losses, and game-ending turn totals
+    SELECT 
+        p.difficulty,
+        COUNT(CASE WHEN g.winner_id = p.player_id THEN 1 END) AS wins,
+        COUNT(CASE WHEN g.loser_id = p.player_id THEN 1 END) AS losses,
+        SUM(CASE WHEN g.winner_id = p.player_id THEN g.total_turns ELSE 0 END) AS total_turns_won,
+        SUM(CASE WHEN g.loser_id = p.player_id THEN g.total_turns ELSE 0 END) AS total_turns_lost
+    FROM players p
+    LEFT JOIN games g ON p.player_id = g.winner_id OR p.player_id = g.loser_id
+    GROUP BY p.difficulty
+),
+player_shot_accuracy AS (
+    -- Extract global shot metric accuracy details cleanly mapped to difficulty groups
+    SELECT 
+        p.difficulty,
+        COUNT(s.turn_sequence) AS total_shots,
+        SUM(CASE WHEN s.shot_outcome = 'H' THEN 1 ELSE 0 END) AS total_hits
+    FROM players p
+    JOIN shot_logs s ON p.player_id = s.player_id
+    GROUP BY p.difficulty
+)
+SELECT 
+    m.difficulty,
+    m.wins,
+    m.losses,
+    (m.wins + m.losses) AS total_games,
+    -- Multiply by 100.0 first to escape Integer Division truncation bugs
+    CASE 
+        WHEN (m.wins + m.losses) > 0 THEN (m.wins * 100.0) / (m.wins + m.losses)
+        ELSE 0.0 
+    END AS win_rate,
+    CASE 
+        WHEN m.wins > 0 THEN m.total_turns_won / m.wins 
+        ELSE 0 
+    END AS avg_turns_to_win,
+    CASE 
+        WHEN a.total_shots > 0 THEN (a.total_hits * 100.0) / a.total_shots
+        ELSE 0.0 
+    END AS shot_accuracy
+FROM player_match_stats m
+LEFT JOIN player_shot_accuracy a ON m.difficulty = a.difficulty;
+"""
+
+
 def display_database_summary(db_path: str = DB_FILE):
-    query = """
-        WITH player_match_stats AS (
-            -- Calculate individual match wins, losses, and game-ending turn totals
-            SELECT 
-                p.difficulty,
-                COUNT(CASE WHEN g.winner_id = p.player_id THEN 1 END) AS wins,
-                COUNT(CASE WHEN g.loser_id = p.player_id THEN 1 END) AS losses,
-                SUM(CASE WHEN g.winner_id = p.player_id THEN g.total_turns ELSE 0 END) AS total_turns_won,
-                SUM(CASE WHEN g.loser_id = p.player_id THEN g.total_turns ELSE 0 END) AS total_turns_lost
-            FROM players p
-            LEFT JOIN games g ON p.player_id = g.winner_id OR p.player_id = g.loser_id
-            GROUP BY p.difficulty
-        ),
-        player_shot_accuracy AS (
-            -- Extract global shot metric accuracy details cleanly mapped to difficulty groups
-            SELECT 
-                p.difficulty,
-                COUNT(s.turn_sequence) AS total_shots,
-                SUM(CASE WHEN s.shot_outcome = 'H' THEN 1 ELSE 0 END) AS total_hits
-            FROM players p
-            JOIN shot_logs s ON p.player_id = s.player_id
-            GROUP BY p.difficulty
-        )
-        SELECT 
-            m.difficulty,
-            m.wins,
-            m.losses,
-            (m.wins + m.losses) AS total_games,
-            -- Multiply by 100.0 first to escape Integer Division truncation bugs
-            CASE 
-                WHEN (m.wins + m.losses) > 0 THEN (m.wins * 100.0) / (m.wins + m.losses)
-                ELSE 0.0 
-            END AS win_rate,
-            CASE 
-                WHEN m.wins > 0 THEN m.total_turns_won / m.wins 
-                ELSE 0 
-            END AS avg_turns_to_win,
-            CASE 
-                WHEN a.total_shots > 0 THEN (a.total_hits * 100.0) / a.total_shots
-                ELSE 0.0 
-            END AS shot_accuracy
-        FROM player_match_stats m
-        LEFT JOIN player_shot_accuracy a ON m.difficulty = a.difficulty;
-    """
+    query = DISPLAY_QUERY
 
     try:
         with sqlite3.connect(db_path) as conn:
@@ -95,6 +98,47 @@ def display_database_summary(db_path: str = DB_FILE):
             )
         )
     output(Output.STATS_FILLER)
+
+
+def get_database_summary(db_path: str = DB_FILE):
+    query = DISPLAY_QUERY
+    out = ""
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute(query)
+            rows = cursor.fetchall()
+    except sqlite3.OperationalError as err:
+        output(f"[INFO] Analytics database is empty or uninitialized.")
+        return
+
+    active_rows = [r for r in rows if (r[1] and r[2]) > 0]
+    if not active_rows:
+        output(f"[INFO] No completed game tracking telemetry found.")
+        return
+
+    out += Output.STATS_FILLER
+    out += Output.STATS_HEADER_TITLE
+    out += Output.STATS_FILLER
+    out += Output.STATS_HEADER_SUB
+    out += Output.STATS_FILLER
+
+    for row in active_rows:
+        diff, wins, losses, total_games, win_rate, avg_turns, accuracy = row
+
+        out += Output.STATS_OUTPUT.format(
+            f"{diff:<12}",
+            f"{total_games:<5}",
+            f"{wins:<5}",
+            f"{losses:<6}",
+            f"{win_rate:<5.1f}",
+            f"{avg_turns:>12}",
+            f"{accuracy:>12.1f}%",
+        )
+    out += Output.STATS_FILLER
+
+    return out
 
 
 @dataclass
