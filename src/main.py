@@ -10,7 +10,14 @@ from .Ship import Direction
 import src.UI as UI
 import src.name_generator as Names
 from src import config as _config
-from .Stats import GameStatTracker, MatchTelemetry, ChronologicalShot, DB_FILE, display_database_summary
+from .Stats import (
+    GameStatTracker,
+    MatchTelemetry,
+    ChronologicalShot,
+    DB_FILE,
+    display_database_summary,
+    get_database_summary,
+)
 from . import CtkUI
 
 from typing import TYPE_CHECKING
@@ -122,6 +129,7 @@ def _run_gui():
         Names.NameGenerator(),
         [Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HUMAN],
         tracker,
+        lambda: get_database_summary(DB_FILE),
     )
     app_controller.mainloop()
 
