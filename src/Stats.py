@@ -100,7 +100,7 @@ def display_database_summary(db_path: str = DB_FILE):
     output(Output.STATS_FILLER)
 
 
-def get_database_summary(db_path: str = DB_FILE):
+def get_database_summary(db_path: str = DB_FILE) -> str:
     query = DISPLAY_QUERY
     out = ""
 
@@ -110,13 +110,11 @@ def get_database_summary(db_path: str = DB_FILE):
             cursor.execute(query)
             rows = cursor.fetchall()
     except sqlite3.OperationalError as err:
-        output(f"[INFO] Analytics database is empty or uninitialized.")
-        return
+        return f"[INFO] Analytics database is empty or uninitialized."
 
     active_rows = [r for r in rows if (r[1] and r[2]) > 0]
     if not active_rows:
-        output(f"[INFO] No completed game tracking telemetry found.")
-        return
+        return f"[INFO] No completed game tracking telemetry found."
 
     out += Output.STATS_FILLER
     out += Output.STATS_HEADER_TITLE
