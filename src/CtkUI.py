@@ -51,6 +51,12 @@ class Colors:
     toast_bg: str = "#2b2b2b"
     toast_border: str = "#3f3f3f"
 
+    # Text Status Colors
+    adaptive_text: tuple[str, str] = ("#1A1A1A", "#F0F0F0")
+    toast_info: tuple[str, str] = ("#1C3D5A", "#A0C4DF")  # Deep blue vs Soft tactical blue
+    toast_success: tuple[str, str] = ("#1E4620", "#A2E8A2")  # Forest green vs Matrix green
+    toast_warning: tuple[str, str] = ("#7B5C00", "#FEEBC8")  # Amber brown vs Soft warning gold
+
 
 @dataclass
 class UIConfig:
@@ -76,21 +82,18 @@ class UIConfig:
 
 def show_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500, anchor: str = "sw"):
     toast = ctk.CTkFrame(
-        parent,
-        fg_color=Colors.toast_bg,
-        corner_radius=8,
-        border_width=1,
-        border_color=Colors.toast_border,
+        parent, fg_color=Colors.toast_bg, corner_radius=8, border_width=1, border_color=Colors.toast_border
     )
 
     parent.update_idletasks()
     max_allowed_width = int(parent.winfo_width() * 0.30)
 
-    label = ctk.CTkLabel(toast, text=message, text_color="white", wraplength=max_allowed_width - 20, justify="left")
+    label = ctk.CTkLabel(
+        toast, text=message, text_color=Colors.adaptive_text, wraplength=max_allowed_width - 20, justify="left"
+    )
     label.pack(padx=12, pady=8, expand=True, fill="both")
 
     toast.place(relx=0.02, rely=0.98, relwidth=0.30, relheight=0.10, anchor=anchor)
-
     toast.after(duration, toast.destroy)
 
 
