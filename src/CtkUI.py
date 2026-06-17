@@ -51,6 +51,44 @@ class UIConfig:
     color_danger_hover: str = "#5C0000"
 
 
+def show_bottom_left_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500):
+    toast = ctk.CTkToplevel(parent)
+    toast.overrideredirect(True)
+    toast.attributes("-topmost", True)
+
+    screen_width = toast.winfo_screenmmwidth()
+    screen_height = toast.winfo_screenmmheight()
+
+    max_width = int(screen_width * 0.30)
+    max_height = int(screen_height * 0.10)
+
+    label = ctk.CTkLabel(
+        toast,
+        text=message,
+        corner_radius=UIConfig.tile_corner_radius,
+        fg_color="#2b2b2b",
+        text_color="white",
+        padx=15,
+        pady=10,
+        wraplength=max_width - 30,
+    )
+    label.pack(expand=True, fill="both")
+
+    toast.update_idletasks()
+
+    actual_width = min(label.winfo_reqwidth(), max_width)
+    actial_height = min(label.winfo_reqheight(), max_height)
+
+    x_offset = 20
+    y_offset = 20
+
+    x = x_offset
+    y = screen_height - actial_height - y_offset
+
+    toast.geometry(f"{actual_width}x{actial_height}+{x}+{y}")
+    toast.after(duration, toast.destroy)
+
+
 class MainMenuFrame(ctk.CTkFrame):
     def __init__(self, master: ctk.CTkFrame, app_controller: BattleShipApp):
         super().__init__(master, fg_color="transparent")
@@ -120,10 +158,12 @@ class GameFrame(ctk.CTkFrame):
         self.current_state: GameUIState = GameUIState.PLACEMENT
 
         # Ship placement data
+        self.ships_to_place: dict[str, int] = config.fleet_composition
         self.c_ship_orientation: str = "H"  # | "V"
         self.c_ship_index: int = 0
 
         self._init_layout()
+        self.update_state_view()
 
     def _init_layout(self):
         # Status
@@ -173,8 +213,22 @@ class GameFrame(ctk.CTkFrame):
     def change_state(self, next: GameUIState):
         self.current_state = next
 
-    def update_state(self):
-        pass
+    def update_state_view(self):
+        ship_name = ""
+        if self.current_state == GameUIState.PLACEMENT and self.ships_to_place:
+            ship_name = list(self.ships_to_place.keys())[self.c_ship_index]
+
+        state_config = {
+            GameUIState.PLACEMENT: (f"Deployment Phase: Placing {ship_name}", "normal", "transparent"),
+            GameUIState.ATTACKER: ("Attack Phase", "disabled", "transparent"),
+            GameUIState.DEFENDER: ("Defense Phase", "disabled", "#D1A119"),
+            GameUIState.GAME_OVER: ("Game Over", "disabled", "transparent"),
+        }
+
+        text, btn_state, fg_color = state_config.get(self.current_state, ("", "disabled", "transparent"))
+
+        self.status_label.configure(text=text, fg_color=fg_color)
+        self.btn_orientation.configure(state=btn_state)
 
     def _build_board(
         self,
@@ -183,34 +237,28 @@ class GameFrame(ctk.CTkFrame):
         button_dict: Dict[Tuple[int, int], ctk.CTkButton],
         side: str,
         interactive: bool,
-        command: Callable[[int, int, dict[tuple[int, int], ctk.CTkButton]], None] | None = None,
+        command: Callable[[int, int, Dict[tuple[int, int], ctk.CTkButton]], None] | None = None,
     ):
-        if command:
-            _cmd = command
-        else:
-            _cmd: Callable[[int, int, dict[tuple[int, int], ctk.CTkButton]], None] = (
-                lambda x, y, button_dict: self.handle_attacker_click(x, y, button_dict)
-            )
         # Remove old buttons
         for btn_set in button_dict.values():
             btn_set.destroy()
+        button_dict.clear()
+
+        _cmd = command or (lambda x, y, b_dict: self.handle_attacker_click(x, y, b_dict))
 
         board_frame = ctk.CTkFrame(parent)
         col_position = 0 if side.lower() == "left" else 1
         board_frame.grid(row=0, column=col_position, pady=(10, 5), padx=20)
 
-        lbl: ctk.CTkLabel = ctk.CTkLabel(board_frame, text=title, font=self.ui_cfg.font_board_title)
-        lbl.grid(row=0, column=0, columnspan=10, pady=(10, 5))
+        lbl = ctk.CTkLabel(board_frame, text=title, font=self.ui_cfg.font_board_title)
+        lbl.grid(row=0, column=0, columnspan=config.board_width, pady=(10, 5))
 
-        self.board_container: ctk.CTkFrame = ctk.CTkFrame(self)
-        self.board_container.pack(pady=20, expand=True, fill="both")
+        default_color: str = self.ui_cfg.color_ocean if not interactive else self.ui_cfg.color_disabled
+        hover_color: str = self.ui_cfg.color_hover if not interactive else self.ui_cfg.color_ocean
 
         for x in range(config.board_width):
             for y in range(config.board_height):
                 cmd = (lambda cx=x, cy=y: _cmd(cx, cy, button_dict)) if interactive else None
-
-                default_color: str = self.ui_cfg.color_ocean if not interactive else self.ui_cfg.color_disabled
-                hover_color: str = self.ui_cfg.color_hover if not interactive else self.ui_cfg.color_ocean
 
                 btn: ctk.CTkButton = ctk.CTkButton(
                     board_frame,
@@ -229,10 +277,14 @@ class GameFrame(ctk.CTkFrame):
         if self.current_state != GameUIState.PLACEMENT:
             return
 
+        self.c_ship_orientation = "V" if self.c_ship_orientation == "H" else "H"
+        self.btn_orientation.configure(text=f"Orientation: {self.c_ship_orientation} (Press R to flip)")
+
     def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         if not self.status_label:
             return
-        self.status_label.configure(text=f"Clicked ({x}, {y})", fg_color="transparent")
+        # self.status_label.configure(text=f"Clicked ({x}, {y})", fg_color="transparent")
+        show_bottom_left_toast(self, f"Clicked ({x}, {y})")
 
         btn = button_dict[(x, y)]
 
