@@ -268,22 +268,23 @@ class GameFrame(ctk.CTkFrame):
     def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         if not self.status_label:
             return
-        # self.status_label.configure(text=f"Clicked ({x}, {y})", fg_color="transparent")
+
         show_toast(self, f"Clicked ({x}, {y})")
 
-        btn = button_dict[(x, y)]
+        btn = button_dict.get((x, y))
+        if not btn:
+            return
 
-        fg_color = btn.cget("fg_color")
-        hover_color = btn.cget("hover_color")
+        is_disabled = btn.cget("fg_color") == self.ui_cfg.color_disabled
 
-        btn.configure(
-            fg_color=self.ui_cfg.color_ocean if fg_color == self.ui_cfg.color_disabled else self.ui_cfg.color_disabled,
-            hover_color=(
-                self.ui_cfg.color_hover
-                if hover_color == self.ui_cfg.color_danger_hover
-                else self.ui_cfg.color_danger_hover
-            ),
-        )
+        if is_disabled:
+            fg_color = self.ui_cfg.color_ocean
+            hover_color = self.ui_cfg.color_hover
+        else:
+            fg_color = self.ui_cfg.color_disabled
+            hover_color = self.ui_cfg.color_danger_hover
+
+        btn.configure(fg_color=fg_color, hover_color=hover_color)
 
     def handle_attacker_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         pass
