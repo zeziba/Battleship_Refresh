@@ -240,7 +240,7 @@ class GameFrame(ctk.CTkFrame):
 
         _cmd = command or (lambda x, y, b_dict: self.handle_attacker_click(x, y, b_dict))
 
-        board_frame = ctk.CTkFrame(parent)
+        board_frame = ctk.CTkFrame(parent, fg_color=self.ui_cfg.colors.grid_lines)
         col_position = 0 if side.lower() == "left" else 1
         board_frame.grid(row=0, column=col_position, pady=(10, 5), padx=20)
 
@@ -264,7 +264,7 @@ class GameFrame(ctk.CTkFrame):
                     hover_color=hover_color,
                     command=cmd,
                 )
-                btn.grid(row=y + 1, column=x, padx=2, pady=2)
+                btn.grid(row=y + 1, column=x, padx=1, pady=1)
                 button_dict[(x, y)] = btn
 
     def toggle_orientation(self):
