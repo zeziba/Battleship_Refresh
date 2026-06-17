@@ -1,9 +1,9 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Callable, Dict, Tuple, Type, Optional, Any
+from typing import TYPE_CHECKING, Callable, Dict, Tuple, Type, Optional, Literal
 from enum import Enum, auto
 
 import customtkinter as ctk
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from . import config
 
@@ -11,24 +11,59 @@ if TYPE_CHECKING:
     from .Game import Game
     from .Board import Board
 
+FontConfig = Tuple[str, int, str] | Tuple[str, int]
+
+
+@dataclass
+class FontSettings:
+    title: FontConfig = ("Roboto", 48, "bold")
+    header: FontConfig = ("Roboto", 24, "bold")
+    board_title: FontConfig = ("Roboto", 18)
+    body: FontConfig = ("Roboto", 16)
+    stats: FontConfig = ("Consolas", 14)
+
+
+@dataclass
+class Colors:
+    # --- TUI Palette (Text & Accents) ---
+    accent: str = "#00FFCC"  # Neon Cyan for active elements/selections
+    text_main: str = "#FFFFFF"  # Crisp white for high-readability text
+    text_muted: str = "#8A95A5"  # Muted slate for secondary labels
+
+    # --- Tactical Radar Colors (Hex Codes) ---
+    ocean: str = "#1f538d"  # Default blue water
+    grid_lines: str = "#142c4b"  # Subtle dark blue for grid borders
+    hover: str = "#14375e"  # Darker blue for mouse hover
+    disabled: str = "#2a2d2e"  # Grayed out for un-clickable tiles
+
+    # --- Combat Status Colors ---
+    hit: str = "#8B0000"  # Crimson Red
+    miss: str = "#A9A9A9"  # Dark Gray / White
+    ship: str = "#228B22"  # Forest Green (Friendly radar)
+    sunk: str = "#000000"  # Black (Destroyed vessel)
+
+    # --- Interactve Elements ---
+    success: str = "#00FF66"
+    danger_btn: str = "#8B0000"  # Red for Exit/Abort buttons
+    danger_hover: str = "#5C0000"
+
+    # --- Notification / Toast ---
+    toast_bg: str = "#2b2b2b"
+    toast_border: str = "#3f3f3f"
+
 
 @dataclass
 class UIConfig:
     # --- Window Settings ---
     window_title: str = "Battleship Command Center"
     window_width: int = 900
-    window_width_resizable: bool = False
     window_height: int = 600
-    window_height_resizable: bool = False
-    appearance_mode: str = "Dark"  # "Dark", "Light", or "System"
+    window_resizable: Tuple[bool, bool] = (False, False)
+    appearance_mode: Literal["Dark", "Light", "System"] = "Dark"
     color_theme: str = "blue"
 
     # --- Typography ---
-    font_title: tuple = ("Roboto", 48, "bold")
-    font_header: tuple = ("Roboto", 24, "bold")
-    font_board_title: tuple = ("Roboto", 18)
-    font_body: tuple = ("Roboto", 16)
-    font_stats: tuple = ("Consolas", 14)
+    fonts: FontSettings = field(default_factory=FontSettings)
 
     # --- Grid & Tile Dimensions ---
     tile_size: int = 35
@@ -36,31 +71,16 @@ class UIConfig:
     board_padx: int = 30
     board_pady: int = 10
 
-    # --- Tactical Radar Colors (Hex Codes) ---
-    color_ocean: str = "#1f538d"  # Default blue water
-    color_hover: str = "#14375e"  # Darker blue for mouse hover
-    color_disabled: str = "#2a2d2e"  # Grayed out for un-clickable tiles
-
-    # --- Combat Status Colors ---
-    color_hit: str = "#8B0000"  # Crimson Red
-    color_miss: str = "#A9A9A9"  # Dark Gray / White
-    color_ship: str = "#228B22"  # Forest Green (Friendly radar)
-    color_sunk: str = "#000000"  # Black (Destroyed vessel)
-
-    color_danger_btn: str = "#8B0000"  # Red for Exit/Abort buttons
-    color_danger_hover: str = "#5C0000"
-
-    color_toast_bg: str = "#2b2b2b"
-    color_toast_border: str = "#3f3f3f"
+    colors: Colors = field(default_factory=Colors)
 
 
 def show_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500, anchor: str = "sw"):
     toast = ctk.CTkFrame(
         parent,
-        fg_color=UIConfig.color_toast_bg,
+        fg_color=Colors.toast_bg,
         corner_radius=8,
         border_width=1,
-        border_color=UIConfig.color_toast_border,
+        border_color=Colors.toast_border,
     )
 
     parent.update_idletasks()
@@ -81,47 +101,36 @@ class MainMenuFrame(ctk.CTkFrame):
         self.ui_cfg = app_controller.ui_cfg
 
         # Title
-        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Battleship", font=self.ui_cfg.font_title)
+        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Battleship", font=self.ui_cfg.fonts.title)
         title.pack(pady=(50, 40))
 
-        # Action Buttons
-        btns: list[ctk.CTkButton] = [
-            ctk.CTkButton(
-                self,
-                text="Start Game",
-                width=200,
-                height=40,
-                font=self.ui_cfg.font_body,
-                command=self.app_controller.show_game,
-            ),
-            ctk.CTkButton(
-                self,
-                text="Options",
-                width=200,
-                height=40,
-                font=self.ui_cfg.font_body,
-                command=self.app_controller.show_options,
-            ),
-            ctk.CTkButton(
-                self,
-                text="View Statistics",
-                width=200,
-                height=40,
-                font=self.ui_cfg.font_body,
-                command=self.app_controller.show_stats,
-            ),
-            ctk.CTkButton(
-                self,
-                text="Exit Game",
-                width=200,
-                height=40,
-                font=self.ui_cfg.font_body,
-                command=self.app_controller.quit,
-                fg_color=self.ui_cfg.color_danger_btn,
-                hover_color=self.ui_cfg.color_danger_hover,
+        self.buttons = self._create_menu_buttons()
+        self._layout_buttons()
+
+    def _create_menu_buttons(self) -> list[ctk.CTkButton]:
+        default_btn_config = {"master": self, "width": 200, "height": 40, "font": self.ui_cfg.fonts.body}
+
+        menu_items = [
+            ("Start Game", self.app_controller.show_game, {}),
+            ("Options", self.app_controller.show_options, {}),
+            ("View Statistics", self.app_controller.show_stats, {}),
+            (
+                "Exit Game",
+                self.app_controller.quit,
+                {
+                    "fg_color": getattr(self.ui_cfg.colors, "danger_btn"),
+                    "hover_color": getattr(self.ui_cfg.colors, "danger_hover"),
+                },
             ),
         ]
-        for btn in btns:
+
+        return [
+            ctk.CTkButton(**default_btn_config, text=text, command=cmd, **extra_kwargs)
+            for text, cmd, extra_kwargs in menu_items
+        ]
+
+    def _layout_buttons(self):
+        for btn in self.buttons:
             btn.pack(pady=10)
 
 
@@ -169,8 +178,8 @@ class GameFrame(ctk.CTkFrame):
         btn_back: ctk.CTkButton = ctk.CTkButton(
             self.control_container,
             text="Abort Game",
-            fg_color=self.ui_cfg.color_danger_btn,
-            hover_color=self.ui_cfg.color_danger_hover,
+            fg_color=self.ui_cfg.colors.danger_btn,
+            hover_color=self.ui_cfg.colors.danger_hover,
             command=self.app_controller.show_menu,
         )
         btn_back.pack(pady=20, side="right")
@@ -235,11 +244,11 @@ class GameFrame(ctk.CTkFrame):
         col_position = 0 if side.lower() == "left" else 1
         board_frame.grid(row=0, column=col_position, pady=(10, 5), padx=20)
 
-        lbl = ctk.CTkLabel(board_frame, text=title, font=self.ui_cfg.font_board_title)
+        lbl = ctk.CTkLabel(board_frame, text=title, font=self.ui_cfg.fonts.board_title)
         lbl.grid(row=0, column=0, columnspan=config.board_width, pady=(10, 5))
 
-        default_color: str = self.ui_cfg.color_ocean if not interactive else self.ui_cfg.color_disabled
-        hover_color: str = self.ui_cfg.color_hover if not interactive else self.ui_cfg.color_ocean
+        default_color: str = self.ui_cfg.colors.ocean if not interactive else self.ui_cfg.colors.disabled
+        hover_color: str = self.ui_cfg.colors.hover if not interactive else self.ui_cfg.colors.ocean
 
         for x in range(config.board_width):
             for y in range(config.board_height):
@@ -275,14 +284,14 @@ class GameFrame(ctk.CTkFrame):
         if not btn:
             return
 
-        is_disabled = btn.cget("fg_color") == self.ui_cfg.color_disabled
+        is_disabled = btn.cget("fg_color") == self.ui_cfg.colors.disabled
 
         if is_disabled:
-            fg_color = self.ui_cfg.color_ocean
-            hover_color = self.ui_cfg.color_hover
+            fg_color = self.ui_cfg.colors.ocean
+            hover_color = self.ui_cfg.colors.hover
         else:
-            fg_color = self.ui_cfg.color_disabled
-            hover_color = self.ui_cfg.color_danger_hover
+            fg_color = self.ui_cfg.colors.disabled
+            hover_color = self.ui_cfg.colors.danger_hover
 
         btn.configure(fg_color=fg_color, hover_color=hover_color)
 
@@ -299,10 +308,10 @@ class StatsFrame(ctk.CTkFrame):
         self.app_controller = app_controller
         self.ui_cfg = app_controller.ui_cfg
 
-        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Game Statistics", font=self.ui_cfg.font_board_title)
+        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Game Statistics", font=self.ui_cfg.fonts.board_title)
         title.pack(pady=(20, 20))
 
-        self.stats_textbox: ctk.CTkTextbox = ctk.CTkTextbox(self, width=600, height=300, font=self.ui_cfg.font_stats)
+        self.stats_textbox: ctk.CTkTextbox = ctk.CTkTextbox(self, width=600, height=300, font=self.ui_cfg.fonts.stats)
         self.stats_textbox.pack(pady=10)
         # Add data here
         self.stats_textbox.insert("0.0", "Loading Database records...")
@@ -335,7 +344,7 @@ class BattleShipApp(ctk.CTk):
         ctk.set_default_color_theme(self.ui_cfg.color_theme)
         self.title(self.ui_cfg.window_title)
         self.geometry(f"{self.ui_cfg.window_width}x{self.ui_cfg.window_height}")
-        self.resizable(width=self.ui_cfg.window_width_resizable, height=self.ui_cfg.window_height_resizable)
+        self.resizable(width=self.ui_cfg.window_resizable[0], height=self.ui_cfg.window_resizable[1])
 
         # Master Frame Container
         self.container = ctk.CTkFrame(self, fg_color="transparent")
