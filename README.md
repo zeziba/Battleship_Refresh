@@ -14,7 +14,7 @@ Welcome to Battleship Refresh, a modernized desktop implementation of the classi
 The project maintains a clean separation of concerns between core game loop data, UI renderers, and resource storage:
 
 
-### Example Game Output
+### Project Structure
 
 ```Plaintext
 
