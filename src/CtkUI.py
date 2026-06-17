@@ -10,6 +10,9 @@ from . import config
 if TYPE_CHECKING:
     from .Game import Game
     from .Board import Board
+    from .Player import Player, Difficulty
+    from .name_generator import NameGenerator
+    from .Stats import GameStatTracker
 
 FontConfig = Tuple[str, int, str] | Tuple[str, int]
 
@@ -20,7 +23,7 @@ class FontSettings:
     header: FontConfig = ("Roboto", 24, "bold")
     board_title: FontConfig = ("Roboto", 18)
     body: FontConfig = ("Roboto", 16)
-    stats: FontConfig = ("Consolas", 14)
+    stats: FontConfig = ("Consolas", 12)
 
 
 @dataclass
@@ -73,11 +76,12 @@ class UIConfig:
 
     # --- Grid & Tile Dimensions ---
     tile_size: int = 35
-    tile_corner_radius: int = 4
+    tile_corner_radius: int = 8
     board_padx: int = 30
     board_pady: int = 10
 
     colors: Colors = field(default_factory=Colors)
+    transparent: str = "transparent"
 
 
 def show_toast(parent: ctk.CTkFrame, message: str, duration: int = 2500, anchor: str = "sw"):
@@ -227,6 +231,16 @@ class GameFrame(ctk.CTkFrame):
         self.status_label.configure(text=text, fg_color=fg_color)
         self.btn_orientation.configure(state=btn_state)
 
+    def _start_game(self):
+        if self.app_controller._game_engine:
+            pass
+        if self.app_controller._player_gen:
+            pass
+        if self.app_controller._board_gen:
+            pass
+        if self.app_controller._name_gen:
+            pass
+
     def _build_board(
         self,
         parent: ctk.CTkFrame,
@@ -323,21 +337,105 @@ class StatsFrame(ctk.CTkFrame):
         btn_back: ctk.CTkButton = ctk.CTkButton(self, text="Back to Main Menu", command=app_controller.show_menu)
         btn_back.pack(pady=20)
 
+    def update_stats(self):
+        self.stats_textbox.configure(state="normal")
+
+        self.stats_textbox.delete("1.0", "end")
+
+        if self.app_controller._telemetry_output:
+            data = self.app_controller._telemetry_output()
+            self.stats_textbox.insert("1.0", data)
+        else:
+            data = "Error loading stats"
+
+        self.stats_textbox.insert("1.0", f"{data}")
+
+        self.stats_textbox.configure(state="disabled")
+
 
 class OptionFrame(ctk.CTkFrame):
     def __init__(self, master: ctk.CTkFrame, app_controller: BattleShipApp):
         super().__init__(master)
         self.app_controller = app_controller
 
-        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Options")
-        title.pack(pady=10)
+        # Title Label
+        title: ctk.CTkLabel = ctk.CTkLabel(self, text="Options", font=self.app_controller.ui_cfg.fonts.title)
+        title.pack(pady=20)
 
+        # Button Container
+        self.btn_container = ctk.CTkFrame(self)
+        self.btn_container.pack(pady=10, fill="x", padx=40)
+
+        self.btn_difficulty = {}
+        btn_config = {
+            "Player One": (
+                self.app_controller.ui_cfg.transparent,
+                self.app_controller.ui_cfg.colors.hover,
+            ),
+            "Player Two": (
+                self.app_controller.ui_cfg.transparent,
+                self.app_controller.ui_cfg.colors.hover,
+            ),
+        }
+
+        for key, items in btn_config.items():
+            fg_color, hover_color = items
+
+            if key not in self.app_controller._player_difficulty:
+                if self.app_controller.accepted_difficulties:
+                    self.app_controller._player_difficulty[key] = self.app_controller.accepted_difficulties[0]
+                else:
+                    self.app_controller._player_difficulty[key] = None
+
+            current_diff = self.app_controller._player_difficulty[key]
+            diff_text = getattr(current_diff, "name", None)
+
+            self.btn_difficulty[key] = ctk.CTkButton(
+                self.btn_container,
+                text=f"{key}: {diff_text}",
+                fg_color=fg_color,
+                hover_color=hover_color,
+                command=lambda k=key: self._update_difficulty_btn(k),
+            )
+            self.btn_difficulty[key].pack(pady=10, fill="x", padx=20)
+
+        # Back Button
         btn_back: ctk.CTkButton = ctk.CTkButton(self, text="Back to Main Menu", command=app_controller.show_menu)
-        btn_back.pack(pady=20)
+        btn_back.pack(pady=30)
+
+    def _update_difficulty_btn(self, name: str):
+        available_difficulties = self.app_controller.accepted_difficulties
+        if not available_difficulties:
+            return
+
+        current_difficulty = self.app_controller._player_difficulty[name]
+        if not current_difficulty:
+            return
+
+        try:
+            current_index = available_difficulties.index(current_difficulty)
+            next_index = (current_index + 1) % len(available_difficulties)
+        except ValueError:
+            next_index = 0
+
+        new_difficulty = available_difficulties[next_index]
+        self.app_controller._player_difficulty[name] = new_difficulty
+
+        difficulty_text = getattr(new_difficulty, "name", None)
+        self.btn_container[name].configure(text=f"{name}: {difficulty_text}")
 
 
 class BattleShipApp(ctk.CTk):
-    def __init__(self, game_engine: Optional[Game] = None):
+    def __init__(
+        self,
+        game_engine: Optional[Game] = None,
+        player_gen: Optional[Callable[[str, Difficulty, Board, dict[str, int]], Player]] = None,
+        board_gen: Optional[Callable[[int, int], Board]] = None,
+        name_gen: Optional[NameGenerator] = None,
+        accepted_difficulties: Optional[list[Difficulty]] = None,
+        telemetry: Optional[GameStatTracker] = None,
+        telemetry_output: Optional[Callable[[], str]] = None,
+    ):
         super().__init__()
         self.ui_cfg = UIConfig()
         self.game: Optional[Game] = game_engine
@@ -348,6 +446,17 @@ class BattleShipApp(ctk.CTk):
         self.title(self.ui_cfg.window_title)
         self.geometry(f"{self.ui_cfg.window_width}x{self.ui_cfg.window_height}")
         self.resizable(width=self.ui_cfg.window_resizable[0], height=self.ui_cfg.window_resizable[1])
+
+        # Init Game
+        self._game_engine = game_engine
+        self._player_gen = player_gen
+        self._board_gen = board_gen
+        self._name_gen = name_gen
+        self.accepted_difficulties = accepted_difficulties
+        self._telemetry = telemetry
+        self._telemetry_output = telemetry_output
+
+        self._player_difficulty: dict[str, Difficulty | None] = dict()
 
         # Master Frame Container
         self.container = ctk.CTkFrame(self, fg_color="transparent")
@@ -371,6 +480,8 @@ class BattleShipApp(ctk.CTk):
 
     def show_stats(self):
         self._switch_frame(StatsFrame)
+        if isinstance(self.current_frame, StatsFrame):
+            self.current_frame.update_stats()
 
     def show_options(self):
         self._switch_frame(OptionFrame)
