@@ -123,7 +123,7 @@ def _run():
 def _run_gui():
     tracker = GameStatTracker(DB_FILE)
     app_controller = CtkUI.BattleShipApp(
-        Game(),
+        Game,
         create_player,
         lambda width, height: Board(width, height),
         Names.NameGenerator(),
