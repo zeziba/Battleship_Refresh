@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Callable, Dict, Tuple, Type, Optional, Literal
+from typing import TYPE_CHECKING, Callable, Dict, Sequence, Tuple, Type, Optional, Literal
 from enum import Enum, auto
 
 import customtkinter as ctk
@@ -182,6 +182,13 @@ class GameFrame(ctk.CTkFrame):
         )
         self.btn_orientation.pack(padx=10, side="left")
 
+        self.btn_start_game: ctk.CTkButton = ctk.CTkButton(
+            self.control_container,
+            text="Start Game",
+            command=self._start_game,
+        )
+        self.btn_start_game.pack(padx=10, side="left")
+
         btn_back: ctk.CTkButton = ctk.CTkButton(
             self.control_container,
             text="Abort Game",
@@ -232,14 +239,54 @@ class GameFrame(ctk.CTkFrame):
         self.btn_orientation.configure(state=btn_state)
 
     def _start_game(self):
-        if self.app_controller._game_engine:
-            pass
-        if self.app_controller._player_gen:
-            pass
-        if self.app_controller._board_gen:
-            pass
-        if self.app_controller._name_gen:
-            pass
+        # Remove old game
+        if self.app_controller.game:
+            del self.app_controller.game
+
+        self.btn_orientation.configure(state="enabled")
+        self.btn_start_game.configure(state="disabled")
+        self.update_state_view()
+
+        if not self.app_controller._game_engine:
+            return
+        if not self.app_controller.player_gen:
+            return
+        if not self.app_controller.board_gen:
+            return
+        if not self.app_controller.name_gen:
+            return
+
+        # config = self.app_controller.config
+        create_player = self.app_controller.player_gen
+        if not create_player:
+            return
+        names = self.app_controller.name_gen
+        if not names:
+            return
+
+        player_difficulty: Sequence[Difficulty | None] = list(self.app_controller._player_difficulty.values())
+        p1_difficulty = player_difficulty[0]
+        p2_difficulty = player_difficulty[1]
+        if not p1_difficulty or not p2_difficulty:
+            return
+
+        board = self.app_controller.board_gen
+        game = self.app_controller._game_engine
+
+        p1_board = board(config.board_width, config.board_height)
+        p1_name = f"(1) Admiral {names.create_random_name()}"
+        p1 = create_player(p1_name, p1_difficulty, p1_board, config.fleet_composition)
+        p1.generate_fleet(config.fleet_composition)
+
+        # Setup player 2
+        p2_board = board(config.board_width, config.board_height)
+        p2_name = f"(2) Admiral {names.create_random_name()}"
+        p2 = create_player(p2_name, p2_difficulty, p2_board, config.fleet_composition)
+        p2.generate_fleet(config.fleet_composition)
+
+        player_dict = {p1_name: p1, p2_name: p2}
+
+        self.app_controller.game = game(players_dict=player_dict)
 
     def _build_board(
         self,
@@ -342,9 +389,8 @@ class StatsFrame(ctk.CTkFrame):
 
         self.stats_textbox.delete("1.0", "end")
 
-        if self.app_controller._telemetry_output:
-            data = self.app_controller._telemetry_output()
-            self.stats_textbox.insert("1.0", data)
+        if self.app_controller.telemetry_output:
+            data = self.app_controller.telemetry_output()
         else:
             data = "Error loading stats"
 
@@ -428,7 +474,7 @@ class OptionFrame(ctk.CTkFrame):
 class BattleShipApp(ctk.CTk):
     def __init__(
         self,
-        game_engine: Optional[Game] = None,
+        game_engine: Optional[Type[Game]] = None,
         player_gen: Optional[Callable[[str, Difficulty, Board, dict[str, int]], Player]] = None,
         board_gen: Optional[Callable[[int, int], Board]] = None,
         name_gen: Optional[NameGenerator] = None,
@@ -438,7 +484,7 @@ class BattleShipApp(ctk.CTk):
     ):
         super().__init__()
         self.ui_cfg = UIConfig()
-        self.game: Optional[Game] = game_engine
+        self.game: Optional[Game] = None
 
         # Init setup from configuration
         ctk.set_appearance_mode(self.ui_cfg.appearance_mode)
@@ -449,12 +495,14 @@ class BattleShipApp(ctk.CTk):
 
         # Init Game
         self._game_engine = game_engine
-        self._player_gen = player_gen
-        self._board_gen = board_gen
-        self._name_gen = name_gen
+        self.player_gen = player_gen
+        self.board_gen = board_gen
+        self.name_gen = name_gen
         self.accepted_difficulties = accepted_difficulties
         self._telemetry = telemetry
-        self._telemetry_output = telemetry_output
+        self.telemetry_output = telemetry_output
+
+        self.players: dict[str, Player] = {}
 
         self._player_difficulty: dict[str, Difficulty | None] = dict()
 
@@ -471,6 +519,9 @@ class BattleShipApp(ctk.CTk):
 
         self.current_frame = frame_class(master=self.container, app_controller=self)
         self.current_frame.pack(fill="both", expand=True)
+
+    def init_game(self):
+        pass
 
     def show_menu(self):
         self._switch_frame(MainMenuFrame)
