@@ -225,6 +225,74 @@ class GameFrame(ctk.CTkFrame):
     def change_state(self, next: GameUIState):
         self.current_state = next
 
+    def get_tile_state(self, board: Board, x: int, y: int):
+        tile = board.get(x, y)
+        return tile
+
+    def _update_p1_tile(self, p1: Player, x: int, y: int):
+        btn = self.p1_buttons[(x, y)]
+        tile_state = self.get_tile_state(p1.board, x, y)
+        tile = p1.board.get(x, y)
+
+        color_miss = self.ui_cfg.colors.miss
+        color_hit = self.ui_cfg.colors.hit
+        color_ocean = self.ui_cfg.colors.ocean
+        color_sunk = self.ui_cfg.colors.sunk
+
+        if isinstance(tile_state, bool):
+            if tile_state:
+                btn.configure(text="O", fg_color=color_miss)
+            else:
+                btn.configure(text="", fg_color=color_ocean)
+            return
+
+        if not tile.has:
+            return
+
+        if tile.has.hit:
+            if tile.has.is_sunk:
+                ship_initial = tile.has.name[0].upper()
+                btn.configure(text=ship_initial, fg_color=color_sunk)
+            else:
+                btn.configure(text="X", fg_color=color_hit)
+        else:
+            btn.configure(text="", fg_color=color_ocean)
+
+    def _update_p2_tile(self, p2: Player, x: int, y: int):
+        btn = self.p2_buttons[(x, y)]
+
+        if self.current_state == GameUIState.PLACEMENT:
+            btn.configure(text="", fg_color=self.ui_cfg.colors.disabled, state="disabled")
+            return
+
+        color_miss = self.ui_cfg.colors.miss
+        color_hit = self.ui_cfg.colors.hit
+        color_ocean = self.ui_cfg.colors.ocean
+        color_sunk = self.ui_cfg.colors.sunk
+
+        btn.configure(state="normal")
+        tile_state = self.get_tile_state(p2.board, x, y)
+        tile = p2.board.get(x, y)
+
+        if isinstance(tile_state, bool):
+            if tile_state:
+                btn.configure(text="O", fg_color=color_miss)
+            else:
+                btn.configure(text="", fg_color=color_ocean)
+            return
+
+        if not tile.has:
+            return
+
+        if tile.has.hit:
+            if tile.has.is_sunk:
+                ship_initial = tile.has.name[0].upper()
+                btn.configure(text=ship_initial, fg_color=color_sunk)
+            else:
+                btn.configure(text="X", fg_color=color_hit)
+        else:
+            btn.configure(text="", fg_color=color_ocean)
+
     def update_state_view(self):
         ship_name = ""
         if self.current_state == GameUIState.PLACEMENT and self.ships_to_place:
