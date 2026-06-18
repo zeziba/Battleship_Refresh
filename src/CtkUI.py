@@ -6,6 +6,7 @@ import customtkinter as ctk
 from dataclasses import dataclass, field
 
 from . import config
+from .Ship import Direction
 
 if TYPE_CHECKING:
     from .Game import Game
@@ -163,6 +164,9 @@ class GameFrame(ctk.CTkFrame):
         self.c_ship_orientation: str = "H"  # | "V"
         self.c_ship_index: int = 0
 
+        self.player_turn = 0
+        self.current_player = 0
+
         self._init_layout()
         self.update_state_view()
 
@@ -256,6 +260,9 @@ class GameFrame(ctk.CTkFrame):
         if not self.app_controller.name_gen:
             return
 
+        self.player_turn = 0
+        self.current_player = 0
+
         # config = self.app_controller.config
         create_player = self.app_controller.player_gen
         if not create_player:
@@ -338,15 +345,35 @@ class GameFrame(ctk.CTkFrame):
         self.c_ship_orientation = "V" if self.c_ship_orientation == "H" else "H"
         self.btn_orientation.configure(text=f"Orientation: {self.c_ship_orientation} (Press R to flip)")
 
+    def refresh_board_dsiplay(self):
+        pass
+
     def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
+        if not self.current_state == GameUIState.PLACEMENT:
+            return
         if not self.status_label:
             return
-
-        show_toast(self, f"Clicked ({x}, {y})")
 
         btn = button_dict.get((x, y))
         if not btn:
             return
+
+        show_toast(self, f"Clicked ({x}, {y})")
+        c_player = list(self.app_controller.players.keys())[0]
+        ori = Direction.HORIZONTAL if self.c_ship_orientation == "H" else Direction.VERTICAL
+        player = self.app_controller.players[c_player]
+        success, message = player.place_ship_gui(x, y, ori)
+
+        if success:
+            self.refresh_board_dsiplay()
+            next_ship = player.next_ship_to_place
+            if next_ship is None:
+                self.current_state = GameUIState.ATTACKER
+                show_toast(self, f"All Ships Placed\n{message}")
+            else:
+                self.status_label.configure(text=f"Place your next ship: {next_ship}")
+        else:
+            show_toast(self, f"{message}")
 
         is_disabled = btn.cget("fg_color") == self.ui_cfg.colors.disabled
 
