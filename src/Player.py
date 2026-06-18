@@ -287,3 +287,31 @@ class Player:
         if tile.has and tile.hit:
             return x, y, True, tile.has.name
         return x, y, False, ""
+
+    @property
+    def next_ship_to_place(self) -> Optional[Ship.Ship]:
+        if self._fleet:
+            return None
+
+        for ship in self.fleet.ships:
+            if not ship.is_placed:
+                return ship
+
+        return None
+
+    def place_ship_gui(self, x: int, y: int, orientation: Direction) -> tuple[bool, str]:
+        ship = self.next_ship_to_place
+        if not ship:
+            return False, "Placement Failed, All Ships Placed"
+
+        projected_positions = list(ship.possible_places(x, y, ship.length, orientation))
+
+        if has_overlap(self.board, projected_positions):
+            return False, f"Placement Failed: Invalid placement due to overlap or out of bounds!"
+
+        ship.directionality = orientation
+        ship.place_ship(x, y, self._board)
+
+        logger.info(f"GUI: Successfully placed {ship.name} at ({x}, {y})")
+
+        return True, f"Placement Success: {ship}"
