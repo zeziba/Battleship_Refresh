@@ -414,7 +414,22 @@ class GameFrame(ctk.CTkFrame):
         self.btn_orientation.configure(text=f"Orientation: {self.c_ship_orientation} (Press R to flip)")
 
     def refresh_board_dsiplay(self):
-        pass
+        p1: Player | None = self.app_controller.players.get("Player One")
+        p2: Player | None = self.app_controller.players.get("Player Two")
+
+        if not p1 or not p2:
+            # Log here
+            return
+
+        width = config.board_width
+        height = config.board_height
+
+        for x in range(width):
+            for y in range(height):
+                if (x, y) in self.p1_buttons:
+                    self._update_p1_tile(p1, x, y)
+                if (x, y) in self.p2_buttons:
+                    self._update_p1_tile(p2, x, y)
 
     def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
         if not self.current_state == GameUIState.PLACEMENT:
