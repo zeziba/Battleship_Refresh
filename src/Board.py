@@ -47,7 +47,7 @@ class Board:
     def get(self, px, py) -> Tile.Tile:
         logger.debug(f"Getting Board.get({px}, {py}) Tile")
         index = self._convert_to_1d_index(px, py)
-        return self.tiles[index]
+        return self._tiles[index]
 
     def tiles_set(self, x: int, y: int, tile: Tile.Tile) -> Tile.Tile:
         logger.debug(f"Setting Tile at ({x}, {y})")
