@@ -1,7 +1,7 @@
 from __future__ import annotations
 import random
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Generator, Optional
 
 from . import GameRules
 
@@ -37,16 +37,13 @@ class Random(BattleShipAI):
 
     def get_shot(self) -> tuple[int, int]:
         if self.priority_targets:
-            shot = self.priority_targets.pop(random.randint(0, len(self.priority_targets) - 1))
+            shot = self.priority_targets.pop(0)
             if shot in self.potential_shots:
                 self.potential_shots.remove(shot)
             self.shots_taken.add(shot)
             return shot
 
-        if not self.potential_shots:
-            raise IndexError("No more potential shots on the board")
-
-        shot = random.choice(self.potential_shots)
+        shot = self._get_consistent_random_shot()
         self.potential_shots.remove(shot)
         self.shots_taken.add(shot)
         return shot
@@ -65,14 +62,33 @@ class Random(BattleShipAI):
         for hit in self.unsunk_hits:
             self._generate_targets_around(hit)
 
-    def _generate_targets_around(self, shot: tuple[int, int]):
+    def _generate_around_shot(self, shot: tuple[int, int]) -> Generator[tuple[int, int]]:
         x, y = shot
         for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0)):
             nx, ny = x + dx, y + dy
             if 0 <= nx < self.board_width and 0 <= ny < self.board_height:
-                potential_shot = (nx, ny)
-                if (potential_shot not in self.shots_taken) and (potential_shot not in self.priority_targets):
-                    self.priority_targets.append(potential_shot)
+                yield nx, ny
+
+    def _generate_targets_around(self, shot: tuple[int, int]):
+        for nx, ny in self._generate_around_shot(shot):
+            potential_shot = (nx, ny)
+            if (potential_shot not in self.shots_taken) and (potential_shot not in self.priority_targets):
+                self.priority_targets.append(potential_shot)
+
+    def _get_consistent_random_shot(self) -> tuple[int, int]:
+        better_options = []
+        for x, y in self.potential_shots:
+            adjacent_tiles = self._generate_around_shot((x, y))
+
+            has_neighboring_miss = any(
+                (nx, ny) in self.shots_taken and (nx, ny) not in self.unsunk_hits for nx, ny in adjacent_tiles
+            )
+
+            if not has_neighboring_miss:
+                better_options.append((x, y))
+
+        pool = better_options if better_options else self.potential_shots
+        return random.choice(pool)
 
 
 class HuntAndTargetAIAdv(BattleShipAI):
