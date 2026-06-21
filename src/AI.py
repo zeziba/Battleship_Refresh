@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 
 class BattleShipAI(ABC):
-    shots_taken: set = set()
-
     @abstractmethod
     def get_shot(self) -> tuple[int, int]:
         pass
@@ -79,11 +77,11 @@ class HuntAndTargetAIAdv(BattleShipAI):
 
     def __init__(self, width: int, height: int):
         super().__init__()
+        self.shots_taken = set()
         self.board_width = width
         self.board_height = height
 
         self.unsunk_hits: list[tuple[int, int]] = []
-        self.fired_shots: list[tuple[int, int]] = []
         self.potential_targets: list[tuple[int, int]] = []
 
         self.ships_left = GameRules.FLEET.copy()
@@ -128,7 +126,7 @@ class HuntAndTargetAIAdv(BattleShipAI):
             nx, ny = x + dx, y + dy
             if 0 <= nx < self.board_width and 0 <= ny < self.board_height:
                 potential_shot = (nx, ny)
-                if (potential_shot not in self.fired_shots) and (potential_shot not in self.potential_targets):
+                if (potential_shot not in self.shots_taken) and (potential_shot not in self.potential_targets):
                     self.potential_targets.append(potential_shot)
 
     def _rebuild_potential_shots(self):
