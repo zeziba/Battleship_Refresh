@@ -20,6 +20,8 @@ from .Logger import get_logger
 
 logger = get_logger(__name__)
 
+TESTING = True
+
 
 def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
     names = Names.NameGenerator()
@@ -72,14 +74,15 @@ def run():
     global_turn_counter = 0
 
     for result in game.take_turns():
-        UI.print_turn_result(result)
-        UI.print_boards(
-            result.attacker.name,
-            result.attacker.board,
-            result.defender.name,
-            result.defender.board,
-            # result.turnNumber % 50 == 0,
-        )
+        if not TESTING:
+            UI.print_turn_result(result)
+            UI.print_boards(
+                result.attacker.name,
+                result.attacker.board,
+                result.defender.name,
+                result.defender.board,
+                # result.turnNumber % 50 == 0,
+            )
 
         global_turn_counter += 1
         attacker_tel = telemetry_profiles[result.attacker.name]
