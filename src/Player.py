@@ -35,8 +35,8 @@ def create_player(name: str, difficulty: Difficulty, board: Board.Board, fleet_c
         ai_brain = AI.Random(board.width, board.height)
     elif difficulty == Difficulty.MEDIUM:
         ai_brain = AI.HuntAndTargetAIAdv(board.width, board.height)
-    # elif p.difficulty == Difficulty.HARD:
-    #     p._ai_brain = AI.ProbabilityAI()
+    elif difficulty == Difficulty.HARD:
+        ai_brain = AI.ProbabilityAI()
 
     return Player(name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain)
 
