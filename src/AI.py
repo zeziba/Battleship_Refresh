@@ -147,8 +147,31 @@ class HuntAndTargetAIAdv(BattleShipAI):
 
     def _rebuild_potential_shots(self):
         self.potential_targets.clear()
+        target_heatmap = {}
+
         for hit in self.unsunk_hits:
-            self._generate_targets_around(hit)
+            hx, hy = hit
+
+            directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+
+            for dx, dy in directions:
+                for i in range(1, self.smallest_ship_left):
+                    nx, ny = hx + (dx * i), hy + (dy * i)
+
+                    if 0 <= nx < self.board_width and 0 <= ny < self.board_height:
+                        coord = nx, ny
+
+                        if coord in self.shots_taken:
+                            continue
+
+                        if coord not in target_heatmap:
+                            target_heatmap[coord] = 0
+                        target_heatmap[coord] += 1
+                    else:
+                        break
+        if target_heatmap:
+            sorted_targets = sorted(target_heatmap.items(), key=lambda item: item[1], reverse=True)
+            self.potential_targets = [coord for coord, weight in sorted_targets]
 
     def _get_hunt_shot(self) -> tuple[int, int]:
         left_over_shots = [
