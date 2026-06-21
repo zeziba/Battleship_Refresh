@@ -15,7 +15,7 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = field(default=config.board_width)
+    height: int = field(default=config.board_height)
     width: int = field(default=config.board_width)
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
