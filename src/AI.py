@@ -3,7 +3,10 @@ import random
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Generator, Optional
 
+from src.Ship import Ship
+
 from . import GameRules
+from . import config
 
 if TYPE_CHECKING:
     from .Ship import Ship
@@ -194,4 +197,98 @@ class HuntAndTargetAIAdv(BattleShipAI):
 
 
 class ProbabilityAI(BattleShipAI):
-    pass
+    def __init__(self) -> None:
+        self.width = config.board_width
+        self.height = config.board_width
+
+        self.shots_taken: set[tuple[int, int]] = set()
+        self.misses: set[tuple[int, int]] = set()
+        self.unsunk_hits: set[tuple[int, int]] = set()
+
+        self.ships_left = []
+        for ship in GameRules.FLEET.values():
+            self.ships_left.append(ship)
+
+    @property
+    def smallest_ship_size(self):
+        if self.ships_left:
+            return min(self.ships_left)
+
+        return min(GameRules.FLEET.values())
+
+    def register_result(self, shot: tuple[int, int], has_hit: bool, sunk_ship: Ship | None = None) -> None:
+        self.shots_taken.add(shot)
+
+        if has_hit:
+            self.unsunk_hits.add(shot)
+        else:
+            self.misses.add(shot)
+
+        if sunk_ship:
+            ship_size = sunk_ship.length
+
+            if ship_size in self.ships_left:
+                self.ships_left.remove(ship_size)
+
+            remove_coords = set()
+            for coord in self.unsunk_hits:
+                if coord in sunk_ship._positions:
+                    remove_coords.add(coord)
+            self.unsunk_hits -= remove_coords
+
+    def get_shot(self) -> tuple[int, int]:
+        heatmap = [[0.0 for _ in range(self.width)] for _ in range(self.height)]
+
+        for size in self.ships_left:
+            for y in range(self.height):
+                for x in range(self.width - size + 1):
+                    coordinates = [(x + i, y) for i in range(size)]
+                    self._evaluate_and_weigh_placement(coordinates, heatmap)
+
+            for y in range(self.height - size + 1):
+                for x in range(self.width):
+                    coordinates = [(x, y + i) for i in range(size)]
+                    self._evaluate_and_weigh_placement(coordinates, heatmap)
+
+        best_shots: list[tuple[int, int]] = []
+        max_weight = -1.0
+
+        for y in range(self.height):
+            for x in range(self.width):
+                coord = (x, y)
+                if coord in self.shots_taken:
+                    continue
+
+                weight = heatmap[y][x]
+
+                if weight > max_weight:
+                    max_weight = weight
+                    best_shots = [coord]
+                elif weight == max_weight:
+                    best_shots.append(coord)
+
+        if best_shots:
+            return random.choice(best_shots)
+
+        remaining_tiles = [
+            (x, y) for x in range(self.width) for y in range(self.height) if (x, y) not in self.shots_taken
+        ]
+        return random.choice(remaining_tiles)
+
+    def _evaluate_and_weigh_placement(self, coordinates: list[tuple[int, int]], heatmap: list[list[float]]):
+        for coord in coordinates:
+            if coord in self.misses:
+                return
+
+        hit_overlap_count = sum(1 for coord in coordinates if coord in self.unsunk_hits)
+
+        if len(self.unsunk_hits) > 0:
+            if hit_overlap_count == 0:
+                return
+            else:
+                weight = 1000.0 * hit_overlap_count
+        else:
+            weight = 1.0
+
+        for x, y in coordinates:
+            heatmap[y][x] += weight
