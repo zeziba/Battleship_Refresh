@@ -10,8 +10,6 @@ if TYPE_CHECKING:
 
 
 class BattleShipAI(ABC):
-    shots_taken: set = set()
-
     @abstractmethod
     def get_shot(self) -> tuple[int, int]:
         pass
@@ -79,6 +77,7 @@ class HuntAndTargetAIAdv(BattleShipAI):
 
     def __init__(self, width: int, height: int):
         super().__init__()
+        self.shots_taken = set()
         self.board_width = width
         self.board_height = height
 
