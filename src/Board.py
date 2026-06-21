@@ -38,7 +38,7 @@ class Board:
 
     def _convert_to_1d_index(self, x: int, y: int):
         logger.debug("Converting 2d coords to 1d index")
-        if self.width and self.height:
+        if self.width is not None and self.height is not None:
             if not (0 <= x < self.width) or not (0 <= y < self.height):
                 raise IndexError(f"Coordinates ({x}, {y}) track outside of board")
             return x + (y * self.width)
