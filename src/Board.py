@@ -15,7 +15,7 @@ HITTILE = GameRules.HitTile
 
 @dataclass()
 class Board:
-    height: int = field(default=config.board_width)
+    height: int = field(default=config.board_height)
     width: int = field(default=config.board_width)
     _tiles: list[Tile.Tile] = field(init=False, default_factory=list)
 
@@ -38,7 +38,7 @@ class Board:
 
     def _convert_to_1d_index(self, x: int, y: int):
         logger.debug("Converting 2d coords to 1d index")
-        if self.width and self.height:
+        if self.width is not None and self.height is not None:
             if not (0 <= x < self.width) or not (0 <= y < self.height):
                 raise IndexError(f"Coordinates ({x}, {y}) track outside of board")
             return x + (y * self.width)
@@ -47,7 +47,7 @@ class Board:
     def get(self, px, py) -> Tile.Tile:
         logger.debug(f"Getting Board.get({px}, {py}) Tile")
         index = self._convert_to_1d_index(px, py)
-        return self.tiles[index]
+        return self._tiles[index]
 
     def tiles_set(self, x: int, y: int, tile: Tile.Tile) -> Tile.Tile:
         logger.debug(f"Setting Tile at ({x}, {y})")
@@ -57,8 +57,6 @@ class Board:
 
     def _generate_board(self) -> None:
         logger.debug("Generating Board Tile(s)")
-        from . import Tile
-
         self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
 
     @property
