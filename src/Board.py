@@ -57,8 +57,6 @@ class Board:
 
     def _generate_board(self) -> None:
         logger.debug("Generating Board Tile(s)")
-        from . import Tile
-
         self._tiles = [Tile.Tile(None, False) for _ in range(self.width * self.height)]
 
     @property
