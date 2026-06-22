@@ -10,6 +10,8 @@ from .Ship import Direction
 import src.UI as UI
 import src.name_generator as Names
 from src import config as _config
+from .Stats import GameStatTracker, MatchTelemetry, ChronologicalShot, DB_FILE, display_database_summary
+from .Player import RandomPlacement, StrategicMixPlacement
 from .Stats import (
     GameStatTracker,
     MatchTelemetry,
@@ -29,6 +31,8 @@ from .Logger import get_logger
 
 logger = get_logger(__name__)
 
+TESTING = True
+
 
 def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
     names = Names.NameGenerator()
@@ -36,13 +40,17 @@ def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
     # Setup player 1
     p1_board = Board(_config.board_width, _config.board_height)
     p1_name = f"(1) Admiral {names.create_random_name()}"
-    p1 = create_player(p1_name, p1_difficulty, p1_board, _config.fleet_composition)
+    p1 = create_player(
+        p1_name, p1_difficulty, p1_board, _config.fleet_composition, placement_strategy=StrategicMixPlacement()
+    )
     p1.generate_fleet(_config.fleet_composition)
 
     # Setup player 2
     p2_board = Board(_config.board_width, _config.board_height)
     p2_name = f"(2) Admiral {names.create_random_name()}"
-    p2 = create_player(p2_name, p2_difficulty, p2_board, _config.fleet_composition)
+    p2 = create_player(
+        p2_name, p2_difficulty, p2_board, _config.fleet_composition, placement_strategy=RandomPlacement()
+    )
     p2.generate_fleet(_config.fleet_composition)
 
     player_dict = {p1_name: p1, p2_name: p2}
@@ -70,7 +78,7 @@ def _run():
     current_game_id = str(uuid.uuid4())[:8]
     logger.debug("Starting Game")
 
-    game = build_game(Difficulty.EASY, Difficulty.MEDIUM)
+    game = build_game(Difficulty.MEDIUM, Difficulty.HARD)
 
     telemetry_profiles: dict[str, MatchTelemetry] = {}
     logger.debug(f"Building Telemetry data")
@@ -81,14 +89,15 @@ def _run():
     global_turn_counter = 0
 
     for result in game.take_turns():
-        UI.print_turn_result(result)
-        UI.print_boards(
-            result.attacker.name,
-            result.attacker.board,
-            result.defender.name,
-            result.defender.board,
-            # result.turnNumber % 50 == 0,
-        )
+        if not TESTING:
+            UI.print_turn_result(result)
+            UI.print_boards(
+                result.attacker.name,
+                result.attacker.board,
+                result.defender.name,
+                result.defender.board,
+                # result.turnNumber % 50 == 0,
+            )
 
         global_turn_counter += 1
         attacker_tel = telemetry_profiles[result.attacker.name]
