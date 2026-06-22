@@ -1,27 +1,29 @@
 from pathlib import Path
-from os import path
 import random
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RESOURCE_FOLDER = "resources"
+RESOURCE_FOLDER = PROJECT_ROOT / "resources"
 
 
 class NameGenerator:
-    _first_names: set[str] = set()
-    _middle_names: set[str] = set()
-    _places: set[str] = set()
 
     def __init__(self) -> None:
-        with open(path.join(PROJECT_ROOT, RESOURCE_FOLDER, "first-names.txt"), "r") as file:
-            self._first_names = set([line.strip() for line in file.readlines()])
-        with open(path.join(PROJECT_ROOT, RESOURCE_FOLDER, "middle-names.txt"), "r") as file:
-            self._middle_names = set([line.strip() for line in file.readlines()])
-        with open(path.join(PROJECT_ROOT, RESOURCE_FOLDER, "places.txt"), "r") as file:
-            self._places = set([line.strip() for line in file.readlines()])
+        self._first_names = self._load_resources("first-names.txt")
+        self._middle_names = self._load_resources("middle-names.txt")
+        self._places = self._load_resources("places.txt")
 
     def create_random_name(self) -> str:
+        if not (self._first_names and self._middle_names and self._places):
+            raise ValueError("Failed to load resources")
+
         choice = random.choice
         return f"{choice(list(self._first_names))} {choice(list(self._middle_names))} of {choice(list(self._places))}"
+
+    def _load_resources(self, filename: str) -> tuple[str, ...]:
+        file_path = RESOURCE_FOLDER / filename
+
+        with open(file_path, "r", encoding="utf-8") as file:
+            return tuple(line.strip() for line in file if line.strip())
 
 
 if __name__ == "__main__":
