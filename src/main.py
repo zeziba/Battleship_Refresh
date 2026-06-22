@@ -7,7 +7,7 @@ from .Game import Game
 from .Player import Difficulty, create_player
 from .Board import Board
 from .Ship import Direction
-import src.UI as UI
+from .UI import GameUI as UI
 import src.name_generator as Names
 from src import config as _config
 from .Stats import GameStatTracker, MatchTelemetry, ChronologicalShot, DB_FILE, display_database_summary
@@ -31,7 +31,7 @@ from .Logger import get_logger
 
 logger = get_logger(__name__)
 
-TESTING = True
+TESTING = False
 
 
 def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
@@ -73,7 +73,8 @@ def build_player_telemetry(name: str, player: Player):
 
 
 def _run():
-    UI.output("Welcome to Battleship")
+    ui = UI()
+    ui.output("Welcome to Battleship")
     tracker = GameStatTracker(DB_FILE)
     current_game_id = str(uuid.uuid4())[:8]
     logger.debug("Starting Game")
@@ -90,8 +91,8 @@ def _run():
 
     for result in game.take_turns():
         if not TESTING:
-            UI.print_turn_result(result)
-            UI.print_boards(
+            ui.print_turn_result(result)
+            ui.print_boards(
                 result.attacker.name,
                 result.attacker.board,
                 result.defender.name,
@@ -116,7 +117,7 @@ def _run():
         )
 
         if result.game_over:
-            UI.print_game_over(result.attacker.name, result.defender.board)
+            ui.print_game_over(result.attacker.name, result.defender.board)
 
             winner_tel = telemetry_profiles[result.attacker.name]
             loser_tel = telemetry_profiles[result.defender.name]

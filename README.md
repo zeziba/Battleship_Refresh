@@ -136,32 +136,36 @@ python -m src.main -terminal
 
 
 ```text
-Currently turn: 113 with player (1) Admiral Pierette Ezequiel of Foxcroft being targeted
-Shot at (6,8) was a hit
-CARRIER has been sunk!
-Player - (2) Admiral Cybill Massimo of Ouray Board     Player - (1) Admiral Pierette Ezequiel of Foxcroft Board
-   0 1 2 3 4 5 6 7 8 9                                    0 1 2 3 4 5 6 7 8 9
-0 |+ . + + D D D . . +                                 0 |+ . . + . + . S S S 
-1 |. + + . + + . . + B                                 1 |+ . . + . + . . + + 
-2 |+ P . . + . . + + B                                 2 |. + + . . . . + . . 
-3 |+ P + + . + + . + B                                 3 |+ . . . P P . + . + 
-4 |. + + . . + . . + B                                 4 |. + . . + + + + + . 
-5 |. + . . + . . + . +                                 5 |+ + + . + D D D . + 
-6 |+ . . + . . + . . +                                 6 |+ B + . . . + . + . 
-7 |. . + . . + . . . .                                 7 |+ B + + + . + . . + 
-8 |+ . + . + + + + . .                                 8 |. B C C C C C + . . 
-9 |+ . . C C C C C + +                                 9 |. B + + + + . . . . 
+Current Turn: 103 ➔ Target: (1) Admiral Erda Dion of Katy
+Shot at (5,2) resulted in a hit!
+💥 Sunk! PATROLBOAT has been completely destroyed!
+╔═════════════════════════════════════════════════════════════════╗        ╔═════════════════════════════════════════════════════════════════╗
+║ Player - (2) Admiral Coretta Neron of Tabernash Friendly Fleet Map ║     ║ Player - (1) Admiral Erda Dion of Katy Target Radar Grid ║
+╚═════════════════════════════════════════════════════════════════╝        ╚═════════════════════════════════════════════════════════════════╝
+   0 1 2 3 4 5 6 7 8 9                                                        0 1 2 3 4 5 6 7 8 9
+0 |+ . . . . . + . . +                                                     0 |. . . + . . + . + . 
+1 |. + . . + + . . . +                                                     1 |. + . . + . . + . + 
+2 |+ S + + . . . + . .                                                     2 |. . + . P P + . + . 
+3 |+ S + + D . + + . +                                                     3 |. + B + + + . + . + 
+4 |. S + + D + . . + .                                                     4 |+ . B C C C C C + . 
+5 |+ + . + D + . . . .                                                     5 |. + B . + . . + . . 
+6 |+ . . . + . + . . +                                                     6 |. + B . . + + . + + 
+7 |. . . . . P P + + +                                                     7 |+ . . + . D . + . S 
+8 |. . + . B B B B + .                                                     8 |. . + . + D + . + S 
+9 |. . . + . + + + . +                                                     9 |. . . . + D . + . S 
 
-(2) Admiral Cybill Massimo of Ouray has won the game!
-   0 1 2 3 4 5 6 7 8 9
-0 |+ . . + . + . S S S 
-1 |+ . . + . + . . + + 
-2 |. + + . . . . + . . 
-3 |+ . . . P P . + . + 
-4 |. + . . + + + + + . 
-5 |+ + + . + D D D . + 
-6 |+ B + . . . + . + . 
-7 |+ B + + + . + . . + 
-8 |. B C C C C C + . . 
-9 |. B + + + + . . . . 
+
+🏆 (2) Admiral Coretta Neron of Tabernash HAS WON THE GAME! 🏆
+
+Current Turn: 103 ➔ Target: (1) Admiral Erda Dion of Katy
+Shot at (5,2) resulted in a hit!
+💥 Sunk! PATROLBOAT has been completely destroyed!
+================================================================================
+         BATTLESHIP LIFETIME PERFORMANCE STATS         
+================================================================================
+Difficulty   | Games | Wins | Losses | Win %  | Avg Turn Win | Shot Accuracy
+================================================================================
+hard         | 163   | 129   | 34     | 79.1   |           87 |         36.5%
+medium       | 163   | 34    | 129    | 20.9   |           99 |         29.8%
+================================================================================
 ```
