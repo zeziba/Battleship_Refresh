@@ -21,7 +21,7 @@ from .Logger import get_logger
 
 logger = get_logger(__name__)
 
-TESTING = True
+TESTING = False
 
 
 def build_game(p1_difficulty: Difficulty, p2_difficulty: Difficulty) -> Game:
