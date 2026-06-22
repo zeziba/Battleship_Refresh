@@ -8,12 +8,14 @@ from typing import TYPE_CHECKING, Callable, Optional, Any, Generator
 from . import check_xy
 from .Ship import Direction
 from .Logger import get_logger
-from .GameRules import Output
+from .Localization import text_service
 from . import AI
 from . import Board
 from . import Fleet
-from . import UI
+from .UI import GameUI as UI
 from . import config
+
+ui = UI()
 
 if TYPE_CHECKING:
     from . import Ship
@@ -92,7 +94,7 @@ def _validate_human_ship_input(
     h_v = h_v.strip().lower()
     logger.debug(f"Checking {p.name} at ({x}, {y}) with {h_v}")
     if h_v not in ("h", "v") or len(h_v) != 1:
-        display(Output.DIR_INVALID)
+        display(text_service.format("DIR_INVALID"))
         return False
     directionality = Ship.Direction.HORIZONTAL if h_v == "h" else Ship.Direction.VERTICAL
     if not check_xy(x, y):
@@ -101,14 +103,14 @@ def _validate_human_ship_input(
     try:
         projected_coords = list(Ship.Ship.possible_places(x, y, ship.length, directionality))
     except Exception as ex:
-        display(Output.FAILED_PLACE.format(ship.name, x, y, directionality))
+        display(text_service.format("FAILED_PLACE", ship_name=ship.name, x=x, y=y, direction=directionality))
         logger.warning(ex)
         return False
 
     for px, py in projected_coords:
         for existing_ship in p.get_ships:
             if existing_ship.is_placed and existing_ship.contains(px, py):
-                display(Output.OVERLAP.format(x, y, existing_ship.name))
+                display(text_service.format("OVERLAP", x=x, y=y, occupant=existing_ship.name))
                 return False
 
     return True
@@ -130,7 +132,7 @@ def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
     parsed_coord = UI.parse_coord(raw_coords)
     if parsed_coord is None:
         logger.debug(f"Failed to enter proper coords with {parsed_coord}")
-        UI.output(Output.WRONG_INPUT.format(Output.EXAMPLE_1))
+        ui.output(text_service.format("WRONG_INPUT", error_details=text_service.format("EXAMPLE_1")))
     return parsed_coord
 
 
@@ -315,7 +317,7 @@ class Player:
             raise RuntimeError(f"Polymorphism Error: Human Player '{self.name}' UI input hook")
 
         while True:
-            prompt = Output.COORD_ENTER_GENERIC
+            prompt = text_service.format("COORD_ENTER_GENERIC")
             coords = self._get_input_hook(prompt)
             if coords is not None:
                 return coords
@@ -339,18 +341,18 @@ class Player:
             logger.debug(f"\tAttempting to place Ship: {ship.name}")
             placed = False
             while not placed:
-                UI.output(Output.PLACE.format(ship.name))
-                raw_coords = UI.get_selection(Output.COORD_ENTER_GENERIC)
+                ui.output(text_service.format("PLACE", ship_name=ship.name))
+                raw_coords = UI.get_selection(text_service.format("COORD_ENTER_GENERIC"))
                 parsed_coord = UI.parse_coord(raw_coords)
                 if parsed_coord is None:
-                    UI.output(Output.MANGLED_PLACE.format(ship.name))
-                    UI.output(Output.WRONG_INPUT.format(Output.EXAMPLE_1))
+                    ui.output(text_service.format("MANGLED_PLACE", ship_name=ship.name))
+                    ui.output(text_service.format("WRONG_INPUT", error_details=text_service.format("EXAMPLE_1")))
                     continue
                 x, y = parsed_coord
                 if not check_xy(x, y):
-                    UI.output(Output.OUTSIDE_BOARD.format(x, y))
+                    ui.output(text_service.format("OUTSIDE_BOARD", x=x, y=y))
                     continue
-                h_v = UI.get_selection(Output.DIR_ENTER)
+                h_v = ui.get_selection(text_service.format("DIR_ENTER"))
                 orientation = Direction.HORIZONTAL if h_v.strip().lower() == "h" else Direction.VERTICAL
                 if not is_valid_placement(self.board, x, y, ship.length, orientation):
                     continue
@@ -358,7 +360,7 @@ class Player:
                 if has_overlap(self._board, projected_position):
                     _ship = self._board.get(x, y).has
                     if _ship:
-                        UI.output(Output.OVERLAP.format(x, y, _ship.name))
+                        ui.output(text_service.format("OVERLAP", x=x, y=y, ship_name=_ship.name))
                     continue
 
                 ship.directionality = orientation

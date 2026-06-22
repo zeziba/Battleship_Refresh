@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from math import trunc
 from typing import Any, Optional
 from .Player import Difficulty
-from .UI import output
-from .GameRules import Output
+from .UI import GameUI as UI
+from .Localization import text_service
 
 DB_FILE = "battleship_stats.db"
+ui = UI()
+output = ui.output
 
 
 def generate_player_id(player_name: str) -> str:
@@ -74,27 +76,28 @@ def display_database_summary(db_path: str = DB_FILE):
         output(f"[INFO] No completed game tracking telemetry found.")
         return
 
-    output(Output.STATS_FILLER)
-    output(Output.STATS_HEADER_TITLE)
-    output(Output.STATS_FILLER)
-    output(Output.STATS_HEADER_SUB)
-    output(Output.STATS_FILLER)
+    output(text_service.format("STATS_FILLER"))
+    output(text_service.format("STATS_HEADER_TITLE"))
+    output(text_service.format("STATS_FILLER"))
+    output(text_service.format("STATS_HEADER_SUB"))
+    output(text_service.format("STATS_FILLER"))
 
     for row in active_rows:
         diff, wins, losses, total_games, win_rate, avg_turns, accuracy = row
 
         output(
-            Output.STATS_OUTPUT.format(
-                f"{diff:<12}",
-                f"{total_games:<5}",
-                f"{wins:<5}",
-                f"{losses:<6}",
-                f"{win_rate:<5.1f}",
-                f"{avg_turns:>12}",
-                f"{accuracy:>12.1f}%",
+            text_service.format(
+                "STATS_OUTPUT",
+                a=f"{diff:<12}",
+                b=f"{total_games:<5}",
+                c=f"{wins:<5}",
+                d=f"{losses:<6}",
+                e=f"{win_rate:<5.1f}",
+                f=f"{avg_turns:>12}",
+                g=f"{accuracy:>12.1f}%",
             )
         )
-    output(Output.STATS_FILLER)
+    output(text_service.format("STATS_FILLER"))
 
 
 @dataclass
