@@ -4,10 +4,12 @@ from dataclasses import dataclass, field
 from math import trunc
 from typing import Any, Optional
 from .Player import Difficulty
-from .UI import output
+from .UI import GameUI as UI
 from .GameRules import Output
 
 DB_FILE = "battleship_stats.db"
+ui = UI()
+output = ui.output
 
 
 def generate_player_id(player_name: str) -> str:
