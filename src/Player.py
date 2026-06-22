@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
@@ -9,7 +10,6 @@ from . import check_xy
 from .Ship import Direction
 from .Logger import get_logger
 from .GameRules import Output
-from . import AI
 from . import Board
 from . import Fleet
 from . import UI
@@ -38,16 +38,18 @@ def create_player(
     fleet_comp: dict[str, int],
     placement_strategy: Optional[FleetPlacementStrategy] = None,
 ):
+    from .AI import Random, HuntAndTargetAIAdv, ProbabilityAI
+
     if difficulty == Difficulty.HUMAN:
         return Player(name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp))
 
     ai_brain = None
     if difficulty == Difficulty.EASY:
-        ai_brain = AI.Random(board.width, board.height)
+        ai_brain = Random(board.width, board.height)
     elif difficulty == Difficulty.MEDIUM:
-        ai_brain = AI.HuntAndTargetAIAdv(board.width, board.height)
+        ai_brain = HuntAndTargetAIAdv(board.width, board.height)
     elif difficulty == Difficulty.HARD:
-        ai_brain = AI.ProbabilityAI()
+        ai_brain = ProbabilityAI()
 
     ps = placement_strategy if placement_strategy else RandomPlacement()
 
@@ -440,4 +442,4 @@ class AIPlayer(Player):
 
         logger.info(f"GUI: Successfully placed {ship.name} at ({x}, {y})")
 
-        return True, f"Placement Success: {ship}"
+        return True, f"Placement Success: {ship.name}"
