@@ -13,14 +13,36 @@ class TextService:
         self.active_strings = self.languages.get(lang, EN_STRINGS)
 
         self._theme_context = {
-            "end_color": Colors.END,
-            "red_color": Colors.RED,
-            "green_color": Colors.GREEN,
-            "yellow_color": Colors.YELLOW,
-            "blue_color": Colors.BLUE,
-            "purple_color": Colors.LIGHT_PURPLE,
-            "cyan_color": Colors.CYAN,
-            "white_color": Colors.LIGHT_WHITE,
+            # Text Reset / End
+            "end": Colors.END,
+            # Standard Colors
+            "black": Colors.BLACK,
+            "red": Colors.RED,
+            "green": Colors.GREEN,
+            "brown": Colors.BROWN,
+            "blue": Colors.BLUE,
+            "purple": Colors.PURPLE,
+            "cyan": Colors.CYAN,
+            "light_gray": Colors.LIGHT_GRAY,
+            # Bright / Modified Colors
+            "dark_gray": Colors.DARK_GRAY,
+            "light_red": Colors.LIGHT_RED,
+            "light_green": Colors.LIGHT_GREEN,
+            "yellow": Colors.YELLOW,
+            "light_blue": Colors.LIGHT_BLUE,
+            "light_purple": Colors.LIGHT_PURPLE,
+            "light_cyan": Colors.LIGHT_CYAN,
+            "light_white": Colors.LIGHT_WHITE,
+            "bright_red": Colors.BRIGHT_RED,
+            "white": Colors.WHITE,
+            # Text Formatting Styles
+            "bold": Colors.BOLD,
+            "faint": Colors.FAINT,
+            "italic": Colors.ITALIC,
+            "underline": Colors.UNDERLINE,
+            "blink": Colors.BLINK,
+            "negative": Colors.NEGATIVE,
+            "crossed": Colors.CROSSED,
         }
 
     def format(self, key: str, **kwargs: Any) -> str:

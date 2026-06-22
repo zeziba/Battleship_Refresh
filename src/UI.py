@@ -160,25 +160,28 @@ class GameUI:
     ):
         logger.debug("Starting print_boards")
 
-        p1_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_1", player_id=p1_name)}"
-        p2_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_2", player_id=p2_name)}"
+        p1_header = text_service.format("BOARD_HEADER_PLAYER", player_id=p1_name).split("\n")
+        p2_header = text_service.format("BOARD_HEADER_TARGET", player_id=p2_name).split("\n")
 
         p1_body = self._generate_board_output(player1, hidden).split("\n")
         p2_body = self._generate_board_output(player2, hidden).split("\n")
 
-        max_board_width = max((len(self.strip_ansi(line)) for line in p1_body), default=0)
-        col_width = max(len(self.strip_ansi(p1_out)), max_board_width) + 5
+        all_left_lines = p1_header + p1_body
+        max_left_width = max((len(self.strip_ansi(line)) for line in all_left_lines), default=0)
+        col_width = max_left_width + 5
 
         def pad_line(line: str, width: int):
             visible_len = len(self.strip_ansi(line))
             padding_needed = max(0, width - visible_len)
             return line + (" " * padding_needed)
 
-        out = f"{p1_out:<{col_width}}     {p2_out}\n"
+        out = ""
 
-        for i in range(len(p1_body)):
-            left_line = pad_line(p1_body[i], col_width)
-            out += f"{left_line}{p2_body[i]}\n"
+        for h1, h2 in zip(p1_header, p2_header):
+            out += f"{pad_line(h1, col_width)}{h2}\n"
+
+        for b1, b2 in zip(p1_body, p2_body):
+            out += f"{pad_line(b1, col_width)}{b2}\n"
 
         self.output(out)
 
