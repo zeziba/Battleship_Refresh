@@ -40,7 +40,7 @@ def create_player(
     board: Board.Board,
     fleet_comp: dict[str, int],
     placement_strategy: Optional[FleetPlacementStrategy] = None,
-):
+) -> Player | AIPlayer:
     from .AI import Random, HuntAndTargetAIAdv, ProbabilityAI
 
     if difficulty == Difficulty.HUMAN:
@@ -408,17 +408,6 @@ class Player:
             return x, y, True, tile.has.name
         return x, y, False, ""
 
-
-@dataclass
-class AIPlayer(Player):
-    placement_strategy: FleetPlacementStrategy = field(default_factory=RandomPlacement)
-
-    def _place_fleet(self, fleet_manifest: dict[str, int]):
-        self._fleet = Fleet.GeneralFleet(fleet_comp=fleet_manifest)
-        logger.debug(f"Starting auto ship placement for (AI) {self.name}")
-
-        self.placement_strategy.place_fleet(self._board, self._fleet.ships)
-
     @property
     def next_ship_to_place(self) -> Optional[Ship.Ship]:
         if self._fleet:
@@ -446,3 +435,14 @@ class AIPlayer(Player):
         logger.info(f"GUI: Successfully placed {ship.name} at ({x}, {y})")
 
         return True, f"Placement Success: {ship.name}"
+
+
+@dataclass
+class AIPlayer(Player):
+    placement_strategy: FleetPlacementStrategy = field(default_factory=RandomPlacement)
+
+    def _place_fleet(self, fleet_manifest: dict[str, int]):
+        self._fleet = Fleet.GeneralFleet(fleet_comp=fleet_manifest)
+        logger.debug(f"Starting auto ship placement for (AI) {self.name}")
+
+        self.placement_strategy.place_fleet(self._board, self._fleet.ships)
