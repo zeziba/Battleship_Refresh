@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional
 
 from .Logger import get_logger
 from . import check_xy
-from .GameRules import Output
+from .Localization import text_service
 
 logger = get_logger(__name__)
 
@@ -76,13 +76,13 @@ class GameUI:
             parsed_xy = self.parse_coord(raw_input)
 
             if parsed_xy is None:
-                self.output(Output.INVALID_COORD)
+                self.output(text_service.format("INVALID_COORD"))
                 continue
 
             x, y = parsed_xy
 
             if not check_xy(x, y):
-                self.output(Output.INVALID_COORD)
+                self.output(text_service.format("INVALID_COORD"))
                 continue
             return x, y
 
@@ -135,15 +135,19 @@ class GameUI:
         logger.debug("Starting print_turn_results")
         self.clear_screen()
 
-        frmae_content = [
-            Output.CURRENT_TURN.format(results.turnNumber, results.defender.name),
-            Output.SHOT_AT.format(results.shot_x, results.shot_y, "hit" if results.hit else "miss"),
+        frame_content = [
+            text_service.format(
+                "CURRENT_TURN", current_player=results.turnNumber, target_player=results.defender.name
+            ),
+            text_service.format(
+                "SHOT_AT", x=results.shot_x, y=results.shot_y, result="hit" if results.hit else "miss"
+            ),
         ]
 
         if results.sunk_ship:
-            frmae_content.append(Output.SUNK_SHIP.format(results.sunk_ship))
+            frame_content.append(text_service.format("SUNK_SHIP", ship_name=results.sunk_ship))
 
-        self.output("\n".join(frmae_content), capture=True)
+        self.output("\n".join(frame_content), capture=True)
 
     def print_boards(
         self,
@@ -156,8 +160,8 @@ class GameUI:
     ):
         logger.debug("Starting print_boards")
 
-        p1_out = f"{Output.BOARD_PRINTPUT_HEADER_1.format(p1_name)}"
-        p2_out = f"{Output.BOARD_PRINTPUT_HEADER_2.format(p2_name)}"
+        p1_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_1", player_id=p1_name)}"
+        p2_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_2", player_id=p2_name)}"
 
         p1_body = self._generate_board_output(player1, hidden).split("\n")
         p2_body = self._generate_board_output(player2, hidden).split("\n")
@@ -185,7 +189,7 @@ class GameUI:
         logger.debug("Starting Game Over print")
         if clear:
             self.clear_screen()
-        self.output(Output.WON_GAME.format(p1_name))
+        self.output(text_service.format("WON_GAME", player_name=p1_name))
         last_frame = self.buffer.last_frame
         if last_frame:
             self.output(last_frame)
