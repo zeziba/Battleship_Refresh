@@ -30,8 +30,8 @@ class Colors(StrEnum):
     LIGHT_PURPLE = f"{ESC}[95m"
     LIGHT_CYAN = f"{ESC}[96m"
     LIGHT_WHITE = f"{ESC}[97m"
-    BRIGHT_RED = f"{ESC}[38;5;196m"  # 256-color extended palette
-    WHITE = f"{ESC}[7m"  # Inverted for block effect
+    BRIGHT_RED = f"{ESC}[38;5;196m"
+    WHITE = f"{ESC}[7m"
 
     # Text Styles
     BOLD = f"{ESC}[1m"

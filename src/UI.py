@@ -160,8 +160,8 @@ class GameUI:
     ):
         logger.debug("Starting print_boards")
 
-        p1_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_1", player_id=p1_name)}"
-        p2_out = f"{text_service.format("BOARD_PRINTPUT_HEADER_2", player_id=p2_name)}"
+        p1_out = text_service.format("BOARD_PRINTPUT_HEADER_1", player_id=p1_name)
+        p2_out = text_service.format("BOARD_PRINTPUT_HEADER_2", player_id=p2_name)
 
         p1_body = self._generate_board_output(player1, hidden).split("\n")
         p2_body = self._generate_board_output(player2, hidden).split("\n")
