@@ -15,6 +15,11 @@ class Direction(Enum):
     VERTICAL = auto()
     HORIZONTAL = auto()
 
+    def __iter__(self):
+        dirs = (self.VERTICAL, self.HORIZONTAL)
+        for i in range(len(dirs)):
+            yield dirs[i]
+
 
 @dataclass()
 class Ship:

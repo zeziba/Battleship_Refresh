@@ -1,4 +1,5 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import auto, StrEnum
 import random
@@ -12,6 +13,7 @@ from . import AI
 from . import Board
 from . import Fleet
 from . import UI
+from . import config
 
 if TYPE_CHECKING:
     from . import Ship
@@ -29,7 +31,16 @@ class Difficulty(StrEnum):
 logger = get_logger(__name__)
 
 
-def create_player(name: str, difficulty: Difficulty, board: Board.Board, fleet_comp: dict[str, int]):
+def create_player(
+    name: str,
+    difficulty: Difficulty,
+    board: Board.Board,
+    fleet_comp: dict[str, int],
+    placement_strategy: Optional[FleetPlacementStrategy] = None,
+):
+    if difficulty == Difficulty.HUMAN:
+        return Player(name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp))
+
     ai_brain = None
     if difficulty == Difficulty.EASY:
         ai_brain = AI.Random(board.width, board.height)
@@ -38,7 +49,16 @@ def create_player(name: str, difficulty: Difficulty, board: Board.Board, fleet_c
     elif difficulty == Difficulty.HARD:
         ai_brain = AI.ProbabilityAI()
 
-    return Player(name, difficulty, board, Fleet.GeneralFleet(fleet_comp=fleet_comp), ai_brain)
+    ps = placement_strategy if placement_strategy else RandomPlacement()
+
+    return AIPlayer(
+        name,
+        difficulty,
+        board,
+        Fleet.GeneralFleet(fleet_comp=fleet_comp),
+        ai_brain,
+        placement_strategy=ps,
+    )
 
 
 def has_overlap(board: Board.Board, positions: list[tuple[int, int]]) -> bool:
@@ -112,6 +132,101 @@ def get_user_coord_input(prompt: str) -> tuple[int, int] | None:
         logger.debug(f"Failed to enter proper coords with {parsed_coord}")
         UI.output(Output.WRONG_INPUT.format(Output.EXAMPLE_1))
     return parsed_coord
+
+
+class FleetPlacementStrategy(ABC):
+    @abstractmethod
+    def place_fleet(self, board: Board.Board, fleet: list[Ship.Ship]):
+        pass
+
+
+class RandomPlacement(FleetPlacementStrategy):
+    def __init__(self) -> None:
+        self.width = config.board_width
+        self.height = config.board_height
+
+    def place_fleet(self, board: Board.Board, fleet: list[Ship.Ship]):
+        ships_to_place = sorted(fleet, key=lambda ship: ship.length, reverse=True)
+
+        for ship in ships_to_place:
+            self._place_pure_random(board, ship)
+
+    def _place_pure_random(self, board: Board.Board, ship: Ship.Ship):
+        orientations = list(Direction)
+        while True:
+            x = random.randint(0, config.board_width - 1)
+            y = random.randint(0, config.board_height - 1)
+            orientation = random.choice(orientations)
+            if is_valid_placement(board, x, y, ship.length, orientation):
+                ship.place_ship(x, y, board)
+                break
+
+
+class StrategicMixPlacement(RandomPlacement):
+    def __init__(self) -> None:
+        super().__init__()
+
+    def place_fleet(self, board: Board.Board, fleet: list[Ship.Ship]):
+        ships_to_place = sorted(fleet, key=lambda ship: ship.length, reverse=True)
+
+        triggers = {
+            "corner": random.random() < 0.53,
+            "edge": random.random() < 0.79,
+            "inward_edge": True,
+            "center": random.random() < 0.50,
+        }
+
+        for zone_type, active in triggers:
+            if active and ships_to_place:
+                ship = ships_to_place.pop(0)
+                if not self._try_palce_in_zone(board, ship, zone_type):
+                    ships_to_place.insert(0, ship)
+
+        for ship in ships_to_place:
+            self._place_pure_random(board, ship)
+
+    def _try_palce_in_zone(self, board: Board.Board, ship: Ship.Ship, zone_type: str):
+        orientations = list(Direction)
+        possible_positions = [(x, y, o) for x in range(self.width) for y in range(self.height) for o in orientations]
+        random.shuffle(possible_positions)
+
+        for x, y, o in possible_positions:
+            coordinates = list(ship.possible_places(x, y, ship.length, o))
+
+            if not all(0 <= cx < self.width or 0 <= cy < self.height for cx, cy in coordinates):
+                continue
+
+            if not is_valid_placement(board, x, y, ship.length, o):
+                continue
+
+            if self._match_zone_criteria(coordinates, zone_type):
+                ship.place_ship(x, y, board)
+                return True
+        return False
+
+    def _match_zone_criteria(self, coordinates: list[tuple[int, int]], zone_type: str) -> bool:
+        if zone_type == "corner":
+            corners = {(0, 0), (self.width - 1, 0), (0, self.height - 1), (self.width - 1, self.height - 1)}
+            return any(coord in corners for coord in coordinates)
+        elif zone_type == "edge":
+            return any(x == 0 or x == self.width - 1 or y == 0 or y == self.height - 1 for x, y in coordinates)
+        elif zone_type == "inward_edge":
+            edge_touches = sum(
+                1 for x, y in coordinates if x == 0 or x == self.width - 1 or y == 0 or y == self.height - 1
+            )
+            return edge_touches == 1
+        elif zone_type == "center":
+            center_x = self.width // 2
+            center_y = self.height // 2
+            center_four = {
+                (center_x, center_y),
+                (center_x + 1, center_y),
+                (center_x, center_y + 1),
+                (center_x + 1, center_y + 1),
+            }
+            return any(coord in center_four for coord in coordinates)
+
+        return False
 
 
 @dataclass()
@@ -207,11 +322,11 @@ class Player:
 
     def generate_fleet(self, fleet_manifest: dict[str, int]):
         if self.difficulty == Difficulty.HUMAN:
-            self._place_human_fleet(fleet_manifest)
+            self._place_fleet(fleet_manifest)
         else:
             self._place_ai_fleet(fleet_manifest)
 
-    def _place_human_fleet(self, fleet_manifest: dict[str, int]):
+    def _place_fleet(self, fleet_manifest: dict[str, int]):
         if validate_human_ship_input is None:
             raise ValueError("Did not initialize validate_human_ship_input with a display function")
         self._fleet = Fleet.GeneralFleet(fleet_comp=fleet_manifest)
@@ -287,3 +402,14 @@ class Player:
         if tile.has and tile.hit:
             return x, y, True, tile.has.name
         return x, y, False, ""
+
+
+@dataclass
+class AIPlayer(Player):
+    placement_strategy: FleetPlacementStrategy = field(default_factory=RandomPlacement)
+
+    def _place_fleet(self, fleet_manifest: dict[str, int]):
+        self._fleet = Fleet.GeneralFleet(fleet_comp=fleet_manifest)
+        logger.debug(f"Starting auto ship placement for (AI) {self.name}")
+
+        self.placement_strategy.place_fleet(self._board, self._fleet.ships)
