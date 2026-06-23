@@ -320,25 +320,23 @@ class GameFrame(ctk.CTkFrame):
         self.btn_start_game.configure(state="disabled")
         self.update_state_view()
 
-        if not self.app_controller._game_engine:
-            return
-        if not self.app_controller.player_gen:
-            return
-        if not self.app_controller.board_gen:
-            return
-        if not self.app_controller.name_gen:
+        if not (
+            self.app_controller._game_engine
+            and self.app_controller.player_gen
+            and self.app_controller.board_gen
+            and self.app_controller.name_gen
+        ):
             return
 
         self.player_turn = 0
         self.current_player = 0
 
         # config = self.app_controller.config
+
         create_player = self.app_controller.player_gen
-        if not create_player:
-            return
         names = self.app_controller.name_gen
-        if not names:
-            return
+        if not (create_player and names):
+            return False
 
         player_difficulty: Sequence[Difficulty | None] = list(self.app_controller._player_difficulty.values())
         p1_difficulty = player_difficulty[0]
@@ -433,6 +431,8 @@ class GameFrame(ctk.CTkFrame):
                     self._update_p1_tile(p2, x, y)
 
     def handle_placement_click(self, x: int, y: int, button_dict: dict[tuple[int, int], ctk.CTkButton]):
+        if not self.app_controller.players:
+            return
         if not self.current_state == GameUIState.PLACEMENT:
             return
         if not self.status_label:
@@ -628,9 +628,6 @@ class BattleShipApp(ctk.CTk):
 
         self.current_frame = frame_class(master=self.container, app_controller=self)
         self.current_frame.pack(fill="both", expand=True)
-
-    def init_game(self):
-        pass
 
     def show_menu(self):
         self._switch_frame(MainMenuFrame)
