@@ -7,11 +7,12 @@ from dataclasses import dataclass, field
 
 from . import config
 from .Ship import Direction
+from .Player import Difficulty
 
 if TYPE_CHECKING:
     from .Game import Game
     from .Board import Board
-    from .Player import Player, Difficulty
+    from .Player import Player
     from .name_generator import NameGenerator
     from .Stats import GameStatTracker
 
@@ -312,7 +313,7 @@ class GameFrame(ctk.CTkFrame):
 
     def _start_game(self):
         # Remove old game
-        if self.app_controller.game:
+        if hasattr(self.app_controller, "game") and self.app_controller.game:
             del self.app_controller.game
 
         self.btn_orientation.configure(state="enabled")
@@ -540,8 +541,6 @@ class OptionFrame(ctk.CTkFrame):
             if key not in self.app_controller._player_difficulty:
                 if self.app_controller.accepted_difficulties:
                     self.app_controller._player_difficulty[key] = self.app_controller.accepted_difficulties[0]
-                else:
-                    self.app_controller._player_difficulty[key] = None
 
             current_diff = self.app_controller._player_difficulty[key]
             diff_text = getattr(current_diff, "name", None)
@@ -578,7 +577,7 @@ class OptionFrame(ctk.CTkFrame):
         self.app_controller._player_difficulty[name] = new_difficulty
 
         difficulty_text = getattr(new_difficulty, "name", None)
-        self.btn_container[name].configure(text=f"{name}: {difficulty_text}")
+        self.btn_difficulty[name].configure(text=f"{name}: {difficulty_text}")
 
 
 class BattleShipApp(ctk.CTk):
@@ -614,7 +613,7 @@ class BattleShipApp(ctk.CTk):
 
         self.players: dict[str, Player] = {}
 
-        self._player_difficulty: dict[str, Difficulty | None] = dict()
+        self._player_difficulty: dict[str, Difficulty] = {"Player One": Difficulty.EASY, "Player Two": Difficulty.HARD}
 
         # Master Frame Container
         self.container = ctk.CTkFrame(self, fg_color="transparent")

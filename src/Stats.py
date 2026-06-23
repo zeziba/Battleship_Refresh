@@ -119,30 +119,31 @@ def get_database_summary(db_path: str = DB_FILE) -> str:
     if not active_rows:
         return f"[INFO] No completed game tracking telemetry found."
 
-    out += Output.STATS_FILLER + "\n"
-    out += Output.STATS_HEADER_TITLE + "\n"
-    out += Output.STATS_FILLER + "\n"
-    out += Output.STATS_HEADER_SUB + "\n"
-    out += Output.STATS_FILLER + "\n"
+    out += text_service.format("STATS_FILLER") + "\n"
+    out += text_service.format("STATS_HEADER_TITLE") + "\n"
+    out += text_service.format("STATS_FILLER") + "\n"
+    out += text_service.format("STATS_HEADER_SUB") + "\n"
+    out += text_service.format("STATS_FILLER") + "\n"
 
     for row in active_rows:
         diff, wins, losses, total_games, win_rate, avg_turns, accuracy = row
 
         out += (
-            Output.STATS_OUTPUT.format(
-                f"{diff:<12}",
-                f"{total_games:<5}",
-                f"{wins:<5}",
-                f"{losses:<6}",
-                f"{win_rate:<5.1f}",
-                f"{avg_turns:>12}",
-                f"{accuracy:>12.1f}%",
+            text_service.format(
+                "STATS_OUTPUT",
+                a=f"{diff:<12}",
+                b=f"{total_games:<5}",
+                c=f"{wins:<5}",
+                d=f"{losses:<6}",
+                e=f"{win_rate:<5.1f}",
+                f=f"{avg_turns:>12}",
+                g=f"{accuracy:>12.1f}%",
             )
             + "\n"
         )
-    out += Output.STATS_FILLER + "\n"
+    out += text_service.format("STATS_FILLER") + "\n"
 
-    return out
+    return ui.strip_ansi(out)
 
 
 @dataclass
