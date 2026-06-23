@@ -166,7 +166,7 @@ class GameFrame(ctk.CTkFrame):
         self.c_ship_index: int = 0
 
         self.player_turn = 0
-        self.current_player = 0
+        self.current_player: str = ""
 
         self._init_layout()
         self.update_state_view()
@@ -311,6 +311,31 @@ class GameFrame(ctk.CTkFrame):
         self.status_label.configure(text=text, fg_color=fg_color)
         self.btn_orientation.configure(state=btn_state)
 
+    def _init_game(self):
+        names = self.app_controller.name_gen
+        if not names:
+            return
+        self.player_turn = 0
+        self.c_ship_orientation = "H"
+        self.c_ship_index = 0
+
+        players = list(self.app_controller._player_difficulty.keys())
+        if len(players) == 2:
+            self.p1_name = players[0]
+            self.p2_name = players[0]
+        else:
+            self.p1_name = f"(1) Admiral {names.create_random_name()}"
+            self.p2_name = f"(2) Admiral {names.create_random_name()}"
+        difficulties = list(self.app_controller._player_difficulty.values())
+        if len(difficulties) == 2:
+            self.p1_difficulty = difficulties[0]
+            self.p2_difficulty = difficulties[0]
+        else:
+            self.p1_difficulty = Difficulty.HARD
+            self.p2_difficulty = Difficulty.EASY
+
+        self.player_group = tuple(players)
+
     def _start_game(self):
         # Remove old game
         if hasattr(self.app_controller, "game") and self.app_controller.game:
@@ -320,45 +345,36 @@ class GameFrame(ctk.CTkFrame):
         self.btn_start_game.configure(state="disabled")
         self.update_state_view()
 
-        if not (
-            self.app_controller._game_engine
-            and self.app_controller.player_gen
-            and self.app_controller.board_gen
-            and self.app_controller.name_gen
+        if (
+            self.app_controller._game_engine is None
+            or self.app_controller.player_gen is None
+            or self.app_controller.board_gen is None
+            or self.app_controller.name_gen is None
         ):
             return
 
-        self.player_turn = 0
-        self.current_player = 0
+        if hasattr(self.app_controller, "players") and self.app_controller.players:
+            self.app_controller.players.clear()
 
-        # config = self.app_controller.config
+        self._init_game()
 
         create_player = self.app_controller.player_gen
-        names = self.app_controller.name_gen
-        if not (create_player and names):
+        if not (create_player):
             return False
-
-        player_difficulty: Sequence[Difficulty | None] = list(self.app_controller._player_difficulty.values())
-        p1_difficulty = player_difficulty[0]
-        p2_difficulty = player_difficulty[1]
-        if not p1_difficulty or not p2_difficulty:
-            return
 
         board = self.app_controller.board_gen
         game = self.app_controller._game_engine
 
         p1_board = board(config.board_width, config.board_height)
-        p1_name = f"(1) Admiral {names.create_random_name()}"
-        p1 = create_player(p1_name, p1_difficulty, p1_board, config.fleet_composition)
+        p1 = create_player(self.p1_name, self.p1_difficulty, p1_board, config.fleet_composition)
         p1.generate_fleet(config.fleet_composition)
 
         # Setup player 2
         p2_board = board(config.board_width, config.board_height)
-        p2_name = f"(2) Admiral {names.create_random_name()}"
-        p2 = create_player(p2_name, p2_difficulty, p2_board, config.fleet_composition)
+        p2 = create_player(self.p2_name, self.p2_difficulty, p2_board, config.fleet_composition)
         p2.generate_fleet(config.fleet_composition)
 
-        player_dict = {p1_name: p1, p2_name: p2}
+        player_dict = {self.p1_name: p1, self.p2_name: p2}
 
         self.app_controller.game = game(players_dict=player_dict)
 
